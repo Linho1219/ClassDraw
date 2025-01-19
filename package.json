@@ -1,0 +1,23 @@
+{
+  "name": "classwarp",
+  "version": "2.0.0",
+  "description": "Hello World!",
+  "main": "main.js",
+  "author": "Linho",
+  "license": "MIT",
+  "devDependencies": {
+    "@electron-forge/cli": "^7.6.0",
+    "@electron-forge/plugin-auto-unpack-natives": "^7.6.0",
+    "@electron-forge/plugin-fuses": "^7.6.0",
+    "@electron/fuses": "^1.8.0",
+    "cross-env": "^7.0.3",
+    "depcheck": "^1.4.7",
+    "electron": "^22.3.27",
+    "patch-package": "^8.0.0",
+    "ts-node": "^10.9.2"
+  },
+  "scripts": {
+    "start": "electron-forge start",
+    "pack": "electron-forge package"
+  }
+}
