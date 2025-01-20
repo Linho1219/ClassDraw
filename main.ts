@@ -31,6 +31,11 @@ const createWindow = () => {
 };
 
 app.whenReady().then(() => {
+  const contextMenu = Menu.buildFromTemplate(trayMenuTemplate);
+  const tray = new Tray(__dirname + "/assets/favicon.ico");
+  tray.setToolTip("抽号机");
+  tray.setContextMenu(contextMenu);
+  tray.on("right-click", () => tray.popUpContextMenu(contextMenu));
   createWindow();
 });
 
