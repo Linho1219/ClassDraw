@@ -1,17 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8">
-    <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'">
-    <title>Hello World!</title>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'"
+    />
+    <title>抽号机</title>
+    <link rel="stylesheet" href="./styles/common.css">
+    <link rel="stylesheet" href="./styles/rand.css">
   </head>
   <body>
-    <h1>Hello World!</h1>
-    We are using Node.js <span id="node-version"></span>,
-    Chromium <span id="chrome-version"></span>,
-    and Electron <span id="electron-version"></span>.
-    <br>
-    Args: <code id="args"></code>
+    <div id="body">
+      <audio src="media/music.wav" id="music" preload="auto"></audio>
+      <audio src="media/dingdong.wav" id="dingdong" preload="auto"></audio>
+      <div id="display">
+        <div id="num"></div>
+      </div>
+      <button id="drawBtn" onclick="rand()" disabled>
+        抽取
+        <div class="c-ripple js-ripple">
+          <span class="c-ripple__circle"></span>
+        </div>
+      </button>
+      <span id="close" class="waves"></span>
+    </div>
   </body>
 </html>
