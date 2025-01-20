@@ -1,6 +1,7 @@
 {
-  "include": ["interface/scripts/*.ts", "main.ts"],
+  "exclude": ["forge.config.ts", "package/*.*"],
   "compilerOptions": {
+    "target": "es2022",
     "moduleResolution": "node",
     "types": ["node"],
     "esModuleInterop": true

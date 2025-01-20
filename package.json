@@ -10,13 +10,17 @@
     "@electron-forge/plugin-auto-unpack-natives": "^7.6.0",
     "@electron-forge/plugin-fuses": "^7.6.0",
     "@electron/fuses": "^1.8.0",
+    "@types/node": "^22.10.7",
     "cross-env": "^7.0.3",
     "depcheck": "^1.4.7",
     "electron": "^22.3.27",
+    "esno": "^4.8.0",
     "ts-node": "^10.9.2"
   },
   "scripts": {
     "start": "tsc && electron-forge start",
-    "pack": "electron-forge package"
+    "build": "tsc && electron-forge package && esno ./package/post.ts",
+    "pack": "tsc && electron-forge package && esno ./package/post.ts && makensis ./package/pack.nsi",
+    "sfx": "makensis ./package/pack.nsi"
   }
 }
