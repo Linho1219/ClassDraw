@@ -6,7 +6,7 @@ const config: ForgeConfig = {
   packagerConfig: {
     asar: true,
     name: "ClassDraw",
-    icon: "./assets/favicon.ico",
+    icon: "./favicon.ico",
     ignore: [/\.ts$/, /\/package$/],
   },
   plugins: [

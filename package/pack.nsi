@@ -3,7 +3,7 @@
 ; For compatibility reasons, avoid using non-ASCII characters
 
 OutFile "..\out\${OUTPUT_FILE}"
-Icon "..\assets\favicon.ico"
+Icon "..\favicon.ico"
 
 RequestExecutionLevel user
 SetCompressor /SOLID zlib

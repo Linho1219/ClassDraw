@@ -1,6 +1,9 @@
 # Compiled JS
 *.js
 
+# test
+*.test.ts
+
 # Logs
 logs
 *.log

@@ -1,6 +1,9 @@
 /// <reference path="./electron.d.ts" />
 const { contextBridge, ipcRenderer } = require("electron");
 
+const $ = (selector: string) =>
+  document.getElementById(selector) ?? document.querySelector(selector);
+
 contextBridge.exposeInMainWorld("electron", {
   getStartupParams: () => ipcRenderer.invoke("get-startup-params"),
 });
@@ -17,15 +20,8 @@ const contentLoadPromise = new Promise<void>((resolve) => {
   });
 });
 
-Promise.all([ipcParamsPromise, contentLoadPromise]).then(([args]) => {
-  const replaceText = (selector: string, text: string = "") => {
-    const element = document.getElementById(selector);
-    if (element) element.innerText = text;
-  };
-
-  for (const dependency of ["chrome", "node", "electron"]) {
-    replaceText(`${dependency}-version`, process.versions[dependency]);
-  }
-
-  document.getElementById("args").innerText = JSON.stringify(args);
+Promise.all([ipcParamsPromise, contentLoadPromise]).then(([list]) => {
+  console.log(list);
+  (<HTMLButtonElement>$("drawBtn")).disabled = false;
+  
 });
