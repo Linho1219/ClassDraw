@@ -5,14 +5,13 @@ const { app, BrowserWindow, Menu, Tray } = require("electron");
 
 const trayMenuTemplate: Electron.MenuItemConstructorOptions[] = [
   {
-    label: "打开",
-    click: () => {},
+    label: "ClassDraw",
+    enabled: false,
   },
+  { type: "separator" },
   {
     label: "退出",
-    click: () => {
-      app.quit();
-    },
+    click: () => app.quit(),
   },
 ];
 
@@ -25,9 +24,14 @@ const createWindow = () => {
       preload: __dirname + "/interface/scripts/preload.js",
     },
   });
-
   win.loadFile("interface/index.html");
-  // win.webContents.openDevTools();
+
+  const args = process.argv.slice(1)
+  win.webContents.on('did-finish-load', () => {
+    win.webContents.send('startup-params', args)
+  })
+
+  win.webContents.openDevTools();
 };
 
 app.whenReady().then(() => {
