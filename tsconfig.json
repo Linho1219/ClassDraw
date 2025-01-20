@@ -1,0 +1,8 @@
+{
+  "include": ["interface/scripts/*.ts", "main.ts"],
+  "compilerOptions": {
+    "moduleResolution": "node",
+    "types": ["node"],
+    "esModuleInterop": true
+  }
+}

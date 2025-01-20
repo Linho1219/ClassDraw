@@ -13,11 +13,10 @@
     "cross-env": "^7.0.3",
     "depcheck": "^1.4.7",
     "electron": "^22.3.27",
-    "patch-package": "^8.0.0",
     "ts-node": "^10.9.2"
   },
   "scripts": {
-    "start": "electron-forge start",
+    "start": "tsc && electron-forge start",
     "pack": "electron-forge package"
   }
 }

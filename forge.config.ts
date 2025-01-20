@@ -1,19 +1,19 @@
-const { FusesPlugin } = require('@electron-forge/plugin-fuses');
-const { FuseV1Options, FuseVersion } = require('@electron/fuses');
+import type { ForgeConfig } from "@electron-forge/shared-types";
+import { FusesPlugin } from "@electron-forge/plugin-fuses";
+import { FuseV1Options, FuseVersion } from "@electron/fuses";
 
-module.exports = {
+const config: ForgeConfig = {
   packagerConfig: {
     asar: true,
+    name: "ClassDraw",
+    icon: "./assets/favicon.ico",
+    ignore: [/\.ts$/],
   },
-  rebuildConfig: {},
-  makers: [],
   plugins: [
     {
-      name: '@electron-forge/plugin-auto-unpack-natives',
+      name: "@electron-forge/plugin-auto-unpack-natives",
       config: {},
     },
-    // Fuses are used to enable/disable various Electron functionality
-    // at package time, before code signing the application
     new FusesPlugin({
       version: FuseVersion.V1,
       [FuseV1Options.RunAsNode]: false,
@@ -25,3 +25,5 @@ module.exports = {
     }),
   ],
 };
+
+export default config;
