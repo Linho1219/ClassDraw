@@ -1,9 +1,10 @@
 {
-  "exclude": ["forge.config.ts", "package/*.*"],
+  "exclude": ["forge.config.ts", "package/*.*", "*.test.ts"],
   "compilerOptions": {
     "target": "es2022",
     "moduleResolution": "node",
     "types": ["node"],
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "sourceMap": true
   }
 }

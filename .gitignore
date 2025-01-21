@@ -1,5 +1,6 @@
 # Compiled JS
 *.js
+*.map
 
 # test
 *.test.ts

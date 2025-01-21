@@ -1,47 +1,17 @@
 /// <reference path="node_modules/electron/electron.d.ts" />
 
-const { app, BrowserWindow, Menu, Tray } = require("electron");
+const { app, BrowserWindow, Menu, Tray, ipcMain } = require("electron");
 // Electron 的 ESM 支持始于 v28.0.0，因此只能 require
 
-const trayMenuTemplate: Electron.MenuItemConstructorOptions[] = [
-  {
-    label: "ClassDraw",
-    enabled: false,
-  },
-  { type: "separator" },
-  {
-    label: "退出",
-    click: () => app.quit(),
-  },
-];
+const basicConfig = {
+  transparent: true,
+  frame: false,
+  resizable: false,
+  alwaysOnTop: true,
+  skipTaskbar: true,
+} as const;
 
-const createTray = () => {
-  const contextMenu = Menu.buildFromTemplate(trayMenuTemplate);
-  const tray = new Tray(__dirname + "/favicon.ico");
-  tray.setToolTip("抽号机");
-  tray.setContextMenu(contextMenu);
-  tray.on("right-click", () => tray.popUpContextMenu(contextMenu));
-};
-
-const createWindow = () => {
-  const win = new BrowserWindow({
-    width: 310,
-    height: 310,
-    icon: __dirname + "/favicon.ico",
-    transparent: true,
-    frame: false,
-    resizable:false,
-    alwaysOnTop: true,
-    webPreferences: {
-      preload: __dirname + "/interface/scripts/preload.js",
-    },
-  });
-  win.loadFile("interface/index.html");
-
-  win.webContents.openDevTools();
-
-  return win;
-};
+const cardSize = 310;
 
 const generateList = () => {
   // const execPath = process.argv[1][0];
@@ -65,15 +35,65 @@ const generateList = () => {
   return Array.from(new Set(list.sort((a, b) => a - b)));
 };
 
+const list = generateList();
+const windows: {
+  id: number;
+  win: Electron.CrossProcessExports.BrowserWindow;
+}[] = [];
+
+const createWindow = (() => {
+  let curid = 0;
+  return () => {
+    const id = curid++;
+    const win = new BrowserWindow({
+      ...basicConfig,
+      width: cardSize,
+      height: cardSize,
+      icon: __dirname + "/favicon.ico",
+      webPreferences: {
+        preload: __dirname + "/interface/scripts/preload.js",
+      },
+    });
+    win.loadFile("interface/index.html");
+    win.webContents.on("did-finish-load", () =>
+      win.webContents.send("startup-params", { list, id })
+    );
+    windows.push({ id, win });
+    // win.webContents.openDevTools();
+  };
+})();
+
+const createTray = () => {
+  const contextMenu = Menu.buildFromTemplate([
+    {
+      label: "ClassDraw",
+      enabled: false,
+    },
+    { type: "separator" },
+    {
+      label: "打开窗口",
+      click: () => createWindow(),
+    },
+    {
+      label: "退出",
+      click: () => app.quit(),
+    },
+  ]);
+  const tray = new Tray(__dirname + "/favicon.ico");
+  tray.setToolTip("抽号机");
+  tray.setContextMenu(contextMenu);
+  tray.on("right-click", () => tray.popUpContextMenu(contextMenu));
+};
+
 app.whenReady().then(() => {
-  const list = generateList();
   createTray();
-  const win = createWindow();
-  win.webContents.on("did-finish-load", () => {
-    win.webContents.send("startup-params", list);
+  createWindow();
+  ipcMain.on("close", (_, id) => {
+    const index = windows.findIndex((win) => win.id === id);
+    if (index === -1) console.warn("Window not found: " + id);
+    windows[index].win.close();
+    windows.splice(index, 1);
   });
 });
 
-app.on("window-all-closed", () => {
-  app.quit();
-});
+app.on("window-all-closed", () => {});

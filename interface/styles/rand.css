@@ -11,9 +11,10 @@
   }
 }
 
-body {
-  transition: opacity 0.15s;
+:root {
+  -webkit-tap-highlight-color: transparent;
 }
+
 #body {
   position: fixed;
   top: 15px;
@@ -29,6 +30,7 @@ body {
   animation: fadeFromRight 1s cubic-bezier(0, 1, 0, 1);
   background: #fff;
   -webkit-app-region: drag;
+  transition: opacity 0.15s;
 }
 
 #display {
@@ -52,11 +54,11 @@ body {
 
 #display:before {
   top: 0;
-  background: linear-gradient(#fff, #fff0);
+  background: linear-gradient(white, transparent);
 }
 #display:after {
   bottom: 0;
-  background: linear-gradient(#fff0, #fff);
+  background: linear-gradient(transparent, white);
 }
 #num {
   position: absolute;
@@ -76,45 +78,9 @@ body {
   transition: color 0.2s;
 }
 
-#name {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 160px;
-  bottom: 60px;
-  line-height: 100%;
-  font-size: 30px;
-  text-align: center;
-  text-shadow: #0008 0 5px 10px;
-  animation: fadeUp 0.8s cubic-bezier(0, 1, 0, 1);
-  transition: opacity 0.3s, color 0.2s;
-}
-
-.waves {
-  position: relative;
-  cursor: pointer;
-  display: inline-block;
-  overflow: hidden;
-  text-align: center;
-  -webkit-tap-highlight-color: transparent;
-  z-index: 1;
-}
-.waves .waves-animation {
-  position: absolute;
-  border-radius: 50%;
-  width: 25px;
-  height: 25px;
-  opacity: 0;
-  background: rgba(255, 255, 255, 0.3);
-  transition: all 0.7s ease-out;
-  transition-property: transform, opacity;
-  transform: scale(0);
-  pointer-events: none;
-}
-
-button {
+#drawBtn {
   background: #007acc;
-  color: #fff;
+  color: white;
   border: none;
   position: absolute;
   bottom: 0;
@@ -131,11 +97,11 @@ button {
   transition: filter 0.3s, color 0.2s;
 }
 
-button:disabled {
+#drawBtn:disabled {
   filter: brightness(80%);
 }
 
-button:before {
+#drawBtn:before {
   content: "";
   position: absolute;
   bottom: 100%;
