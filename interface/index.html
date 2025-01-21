@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
     <meta
@@ -7,23 +7,19 @@
       content="default-src 'self'; script-src 'self'"
     />
     <title>抽号机</title>
-    <link rel="stylesheet" href="./styles/common.css">
-    <link rel="stylesheet" href="./styles/rand.css">
+    <link rel="stylesheet" href="./styles/common.css" />
+    <link rel="stylesheet" href="./styles/rand.css" />
   </head>
   <body>
     <div id="body">
-      <audio src="assets/music.wav" id="music" preload="auto" ></audio>
-      <audio src="assets/bell.wav" id="bell" preload="auto"></audio>
       <div id="display">
         <div id="num"></div>
       </div>
-      <button id="drawBtn" disabled>
+      <button id="drawBtn">
         抽取
-        <div class="c-ripple js-ripple">
-          <span class="c-ripple__circle"></span>
-        </div>
+        <span id="ripple"></span>
       </button>
-      <span id="close" class="waves"></span>
+      <span id="close"></span>
     </div>
   </body>
 </html>

@@ -11,11 +11,11 @@ const basicConfig = {
   skipTaskbar: true,
 } as const;
 
-const cardSize = 310;
+const cardSize = 260;
 
 const generateList = () => {
   // const execPath = process.argv[1][0];
-  const execPath = "aha 1-9,11-20";
+  const execPath = "aha 1-5";
   const reg = /\d+(-\d+)?(,\d+(-\d+)?)*$/;
   const match = execPath.match(reg);
   if (!match) return;
@@ -51,7 +51,7 @@ const createWindow = (() => {
       height: cardSize,
       icon: __dirname + "/favicon.ico",
       webPreferences: {
-        preload: __dirname + "/interface/scripts/preload.js",
+        preload: __dirname + "/interface/scripts/index.js",
       },
     });
     win.loadFile("interface/index.html");
@@ -73,6 +73,10 @@ const createTray = () => {
     {
       label: "打开窗口",
       click: () => createWindow(),
+    },
+    {
+      label: "启用调试",
+      click: () => windows.forEach((win) => win.win.webContents.openDevTools()),
     },
     {
       label: "退出",

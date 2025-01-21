@@ -18,7 +18,7 @@
     "ts-node": "^10.9.2"
   },
   "scripts": {
-    "start": "tsc && electron .",
+    "start": "tsc && electron-forge start",
     "build": "tsc && electron-forge package && esno ./package/post.ts",
     "pack": "tsc && electron-forge package && esno ./package/post.ts && makensis ./package/pack.nsi",
     "sfx": "makensis ./package/pack.nsi"
