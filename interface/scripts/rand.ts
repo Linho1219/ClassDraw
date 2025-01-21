@@ -9,11 +9,14 @@
   const sleep = async (ms: number): Promise<void> =>
     new Promise((r) => setTimeout(r, ms));
 
-  const ipcParamsPromise = new Promise<{ list: number[]; id: number }>(
-    (resolve) =>
-      ipcRenderer.on("startup-params", (_event, args) => {
-        resolve(args);
-      })
+  const ipcParamsPromise = new Promise<{
+    list: number[];
+    id: number;
+    mute: boolean;
+  }>((resolve) =>
+    ipcRenderer.on("startup-params", (_event, args) => {
+      resolve(args);
+    })
   );
   const contentLoadPromise = new Promise<void>((resolve) =>
     window.addEventListener("DOMContentLoaded", () => {
@@ -33,7 +36,7 @@
     };
   })();
 
-  const autioInit = () => {
+  const autioInit = (mute: boolean) => {
     const music = new Audio("assets/music.wav");
     const bell = new Audio("assets/bell.wav");
     const audioContext = new window.AudioContext();
@@ -43,39 +46,45 @@
     audioContext
       .createMediaElementSource(bell)
       .connect(audioContext.destination);
+    music.muted = bell.muted = mute;
     return { music, bell };
   };
 
-  Promise.all([ipcParamsPromise, contentLoadPromise]).then(([{ list, id }]) => {
-    console.log(list);
-    console.log(id);
+  Promise.all([ipcParamsPromise, contentLoadPromise]).then(
+    ([{ list, id, mute }]) => {
+      console.log(list);
+      console.log(id);
 
-    const numbers = $("num");
-    const ripple = $("ripple");
-    const button = <HTMLButtonElement>$("drawBtn");
+      const numbers = $("num");
+      const ripple = $("ripple");
+      const button = <HTMLButtonElement>$("drawBtn");
 
-    const { music, bell } = autioInit();
+      const { music, bell } = autioInit(mute);
 
-    numbers.innerHTML =
-      "<span>--</span>" + list.map((item) => `<span>${item}</span>`).join("");
+      numbers.innerHTML =
+        "<span>--</span>" + list.map((item) => `<span>${item}</span>`).join("");
 
-    button.onmousedown = async (event) => {
-      const result = getRand(list) + 1;
-      numbers.style.top = -result * 130 + "px";
-      music.play();
-      button.disabled = true;
-      console.log(event.x, event.y);
-      ripple.style.top = event.y - button.offsetTop - 10 + "px";
-      ripple.style.left = event.x - button.offsetLeft - 10 + "px";
-      await sleep(1500);
-      music.pause();
-      music.currentTime = 0;
-      bell.play();
-      button.disabled = false;
-    };
-    $("close").onclick = async () => {
-      ipcRenderer.send("close", id);
-      document.body.style.opacity = "0";
-    };
-  });
+      button.onmousedown = async (event) => {
+        const result = getRand(list) + 1;
+        numbers.style.top = -result * 130 + "px";
+        music.play();
+        button.disabled = true;
+        console.log(event.x, event.y);
+        ripple.style.top = event.y - button.offsetTop - 10 + "px";
+        ripple.style.left = event.x - button.offsetLeft - 10 + "px";
+        await sleep(1500);
+        music.pause();
+        music.currentTime = 0;
+        bell.play();
+        button.disabled = false;
+      };
+      $("close").onclick = async () => {
+        ipcRenderer.send("close", id);
+        document.body.style.opacity = "0";
+      };
+      ipcRenderer.on("mute", (_event, mute) => {
+        music.muted = bell.muted = mute;
+      });
+    }
+  );
 }
