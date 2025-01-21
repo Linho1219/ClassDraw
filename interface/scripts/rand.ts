@@ -43,7 +43,6 @@
     audioContext
       .createMediaElementSource(bell)
       .connect(audioContext.destination);
-    music.volume = bell.volume = 0.5;
     return { music, bell };
   };
 
