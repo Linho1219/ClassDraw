@@ -51,7 +51,7 @@ const createWindow = (() => {
       height: cardSize,
       icon: __dirname + "/favicon.ico",
       webPreferences: {
-        preload: __dirname + "/interface/scripts/index.js",
+        preload: __dirname + "/interface/scripts/rand.js",
       },
     });
     win.loadFile("interface/index.html");
