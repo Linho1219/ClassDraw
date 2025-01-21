@@ -1,4 +1,4 @@
-!define OUTPUT_FILE "ClassDraw_SFX.exe"
+!define OUTPUT_FILE "ClassDraw 1-50.exe"
 ; NSIS Script only supports GBK encoding
 ; For compatibility reasons, avoid using non-ASCII characters
 

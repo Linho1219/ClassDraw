@@ -10,6 +10,8 @@ const {
 } = require("electron");
 // Electron 的 ESM 支持始于 v28.0.0，因此只能 require
 
+const configReg = /\d+(-\d+)?(,\d+(-\d+)?)*(?=\.exe$)/;
+
 const basicConfig = {
   transparent: true,
   frame: false,
@@ -21,11 +23,9 @@ const basicConfig = {
 const cardSize = 260;
 
 const generateList = () => {
-  // const execPath = process.argv[1][0];
-  const execPath = "aha 1-5";
-  const reg = /\d+(-\d+)?(,\d+(-\d+)?)*$/;
-  const match = execPath.match(reg);
-  if (!match) return;
+  const execPath = process.argv[1];
+  const match = execPath.match(configReg);
+  if (!match) return [1, 2, 3, 4, 5];
   const ranges: (number | [number, number])[] = match[0]
     .split(",")
     .map((raw) => {
@@ -117,6 +117,14 @@ const createTray = () => {
   const contextMenu = Menu.buildFromTemplate([
     {
       label: "ClassDraw",
+      enabled: false,
+    },
+    // {
+    //   label: "当前参数：" + process.argv[1],
+    //   enabled: false,
+    // },
+    {
+      label: "当前配置：" + process.argv[1]?.match(configReg)?.[0],
       enabled: false,
     },
     { type: "separator" },
