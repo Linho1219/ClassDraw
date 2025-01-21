@@ -5,6 +5,8 @@
     "moduleResolution": "node",
     "types": ["node"],
     "esModuleInterop": true,
-    "sourceMap": true
+    "sourceMap": true,
+    "strict": true,
+    "declaration": true,
   }
 }

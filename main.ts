@@ -1,6 +1,13 @@
 /// <reference path="node_modules/electron/electron.d.ts" />
 
-const { app, BrowserWindow, Menu, Tray, ipcMain } = require("electron");
+const {
+  app,
+  BrowserWindow,
+  Menu,
+  Tray,
+  screen: escreen,
+  ipcMain,
+} = require("electron");
 // Electron 的 ESM 支持始于 v28.0.0，因此只能 require
 
 const basicConfig = {
@@ -41,25 +48,68 @@ const windows: {
   win: Electron.CrossProcessExports.BrowserWindow;
 }[] = [];
 
+const { createButton, closeButton } = (() => {
+  let button: Electron.CrossProcessExports.BrowserWindow | null = null;
+  return {
+    createButton() {
+      if (button) return;
+      const width = 43,
+        height = 86;
+      const win = new BrowserWindow({
+        ...basicConfig,
+        width,
+        height,
+        focusable: false,
+        icon: __dirname + "/favicon.ico",
+        webPreferences: {
+          preload: __dirname + "/interface/scripts/button.js",
+        },
+        show: false,
+      });
+      const { width: screenWidth, height: screenHeight } =
+        escreen.getPrimaryDisplay().workAreaSize;
+      const x = screenWidth - width;
+      const y = Math.floor((screenHeight - height) / 2);
+      win.setBounds({ x, y, width, height });
+      win.show();
+      win.setAlwaysOnTop(true, "screen-saver");
+      win.loadFile("interface/button.html");
+      button = win;
+    },
+    closeButton() {
+      if (button) button.close();
+      button = null;
+    },
+  };
+})();
+
 const createWindow = (() => {
   let curid = 0;
   return () => {
     const id = curid++;
+    const { width: screenWidth, height: screenHeight } =
+      escreen.getPrimaryDisplay().workAreaSize;
+    const x = screenWidth - cardSize + 10,
+      y = (screenHeight - cardSize) / 2;
     const win = new BrowserWindow({
       ...basicConfig,
       width: cardSize,
       height: cardSize,
+      x,
+      y,
       icon: __dirname + "/favicon.ico",
       webPreferences: {
         preload: __dirname + "/interface/scripts/rand.js",
       },
     });
-    win.loadFile("interface/index.html");
+    win.setAlwaysOnTop(true, "screen-saver");
+    win.loadFile("interface/rand.html");
     win.webContents.on("did-finish-load", () =>
       win.webContents.send("startup-params", { list, id })
     );
+    win.on("moved", () => createButton());
+    setTimeout(() => closeButton(), 400);
     windows.push({ id, win });
-    // win.webContents.openDevTools();
   };
 })();
 
@@ -91,13 +141,18 @@ const createTray = () => {
 
 app.whenReady().then(() => {
   createTray();
-  createWindow();
+  createButton();
   ipcMain.on("close", (_, id) => {
     const index = windows.findIndex((win) => win.id === id);
     if (index === -1) console.warn("Window not found: " + id);
-    windows[index].win.close();
+    const { win } = windows[index];
     windows.splice(index, 1);
+    setTimeout(() => {
+      win.close();
+      createButton();
+    }, 150);
   });
+  ipcMain.on("create-window", () => createWindow());
 });
 
 app.on("window-all-closed", () => {});
