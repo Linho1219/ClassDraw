@@ -50,3 +50,20 @@ body {
   background-position: top left, bottom left;
   transition: transform 0.3s;
 }
+
+.drag #button {
+  opacity: 1;
+}
+
+.drag {
+  opacity: 0.5;
+}
+
+.shadow #button {
+  opacity: 1;
+  transition: none;
+}
+.shadow {
+  animation: none;
+  transition: none;
+}

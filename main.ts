@@ -6,7 +6,7 @@
     BrowserWindow,
     Menu,
     Tray,
-    screen: escreen,
+    screen: screen,
     ipcMain,
   } = require("electron");
   // Electron 的 ESM 支持始于 v28.0.0，因此只能 require
@@ -14,12 +14,13 @@
   const configReg = /\d+(-\d+)?(,\d+(-\d+)?)*(?=\.exe$)/;
   let mute = false;
 
-  const basicConfig = {
+  const basicConfig: Electron.BrowserWindowConstructorOptions = {
     transparent: true,
     frame: false,
     resizable: false,
     alwaysOnTop: true,
     skipTaskbar: true,
+    minimizable: false,
   } as const;
 
   const cardSize = 260;
@@ -27,7 +28,7 @@
   const generateList = () => {
     const execPath = process.argv[1];
     const match = execPath.match(configReg);
-    if (!match) return [1, 2, 3, 4, 5];
+    if (!match) return Array.from({ length: 50 }, (_, i) => i + 1);
     const ranges: (number | [number, number])[] = match[0]
       .split(",")
       .map((raw) => {
@@ -50,38 +51,74 @@
     win: Electron.CrossProcessExports.BrowserWindow;
   }[] = [];
 
-  const { createButton, closeButton } = (() => {
+  let wy: number = 0;
+
+  const buttonUtils = (() => {
+    const [width, height] = [43, 86];
+    let wx: number;
     let button: Electron.CrossProcessExports.BrowserWindow | null = null;
+    let shadowButtonObj: Electron.CrossProcessExports.BrowserWindow | null =
+      null;
+    let first = true;
+    const getButtonConfig = (shadow?: boolean) => ({
+      ...basicConfig,
+      icon: __dirname + "/favicon.ico",
+      webPreferences: shadow
+        ? {
+            backgroundThrottling: false,
+          }
+        : {
+            preload: __dirname + "/interface/scripts/button.js",
+            backgroundThrottling: false,
+          },
+      show: false,
+      thickFrame: false,
+      width,
+      height,
+    });
     return {
       createButton() {
+        if (first) {
+          const { width: screenWidth, height: screenHeight } =
+            screen.getPrimaryDisplay().workAreaSize;
+          wx = screenWidth - width;
+          wy = Math.floor(screenHeight / 2);
+          const shadowButton = new BrowserWindow(getButtonConfig(true));
+          shadowButtonObj = shadowButton;
+          shadowButton.loadFile("interface/shadowButton.html");
+          ipcMain.on("movebuttonstart", () => {
+            shadowButton.showInactive();
+          });
+          ipcMain.on("movebutton", (_, { dy }) => {
+            dy = Math.round(dy);
+            shadowButton.setBounds({
+              x: wx,
+              y: wy + dy - height / 2,
+              width,
+              height,
+            });
+          });
+          ipcMain.on("movebuttonend", (_, { dy }) => {
+            dy = Math.round(dy);
+            wy += dy;
+            if (button)
+              button.setBounds({ x: wx, y: wy - height / 2, width, height });
+            shadowButton.hide();
+          });
+          first = false;
+        }
         if (button) return;
-        const width = 43,
-          height = 86;
-        const win = new BrowserWindow({
-          ...basicConfig,
-          width,
-          height,
-          focusable: false,
-          icon: __dirname + "/favicon.ico",
-          webPreferences: {
-            preload: __dirname + "/interface/scripts/button.js",
-          },
-          show: false,
-        });
-        const { width: screenWidth, height: screenHeight } =
-          escreen.getPrimaryDisplay().workAreaSize;
-        const x = screenWidth - width;
-        const y = Math.floor((screenHeight - height) / 2);
-        win.setBounds({ x, y, width, height });
+        const win = new BrowserWindow(getButtonConfig());
+        win.setBounds({ x: wx, y: wy - height / 2, width, height });
         win.show();
         win.setAlwaysOnTop(true, "screen-saver");
         win.loadFile("interface/button.html");
         button = win;
       },
-      closeButton() {
-        if (button) button.close();
-        button = null;
-      },
+      closeButton: () => (button && button.close(), (button = null)),
+      devButton: () => button && button.webContents.openDevTools(),
+      devShadowButton: () =>
+        shadowButtonObj && shadowButtonObj.webContents.openDevTools(),
     };
   })();
 
@@ -89,10 +126,9 @@
     let curid = 0;
     return () => {
       const id = curid++;
-      const { width: screenWidth, height: screenHeight } =
-        escreen.getPrimaryDisplay().workAreaSize;
+      const { width: screenWidth } = screen.getPrimaryDisplay().workAreaSize;
       const x = screenWidth - cardSize + 10,
-        y = (screenHeight - cardSize) / 2;
+        y = wy - cardSize / 2;
       const win = new BrowserWindow({
         ...basicConfig,
         width: cardSize,
@@ -109,8 +145,6 @@
       win.webContents.on("did-finish-load", () =>
         win.webContents.send("startup-params", { list, id, mute })
       );
-      win.on("moved", () => createButton());
-      setTimeout(() => closeButton(), 400);
       windows.push({ id, win });
     };
   })();
@@ -121,12 +155,10 @@
         label: "ClassDraw",
         enabled: false,
       },
-      // {
-      //   label: "当前参数：" + process.argv[1],
-      //   enabled: false,
-      // },
       {
-        label: "当前配置：" + process.argv[1]?.match(configReg)?.[0],
+        label:
+          "当前配置：" +
+          (process.argv[1]?.match(configReg)?.[0] ?? "默认（1-50）"),
         enabled: false,
       },
       { type: "separator" },
@@ -135,18 +167,30 @@
         click: () => createWindow(),
       },
       {
-        label: "启用调试",
-        click: () =>
-          windows.forEach((win) => win.win.webContents.openDevTools()),
+        label: "调试面板",
+        submenu: [
+          {
+            label: "抽号窗口",
+            click: () =>
+              windows.forEach(({ win }) => win.webContents.openDevTools()),
+          },
+          {
+            label: "侧边按钮",
+            click: () => buttonUtils.devButton(),
+          },
+          {
+            label: "侧边影子按钮",
+            click: () => buttonUtils.devShadowButton(),
+          },
+        ],
       },
       {
         label: "静音",
         type: "checkbox",
-        checked: false,
-        click: ({ checked }) =>
-          windows.forEach((win) =>
-            win.win.webContents.send("mute", (mute = checked))
-          ),
+        click: ({ checked }) => {
+          mute = checked;
+          windows.forEach(({ win }) => win.webContents.send("mute", checked));
+        },
       },
       {
         label: "退出",
@@ -161,7 +205,7 @@
 
   app.whenReady().then(() => {
     createTray();
-    createButton();
+    buttonUtils.createButton();
     ipcMain.on("close", (_, id) => {
       const index = windows.findIndex((win) => win.id === id);
       if (index === -1) console.warn("Window not found: " + id);
@@ -169,10 +213,10 @@
       windows.splice(index, 1);
       setTimeout(() => {
         win.close();
-        createButton();
+        buttonUtils.createButton();
       }, 150);
     });
-    ipcMain.on("create-window", () => createWindow());
+    ipcMain.on("create-window", createWindow);
   });
 
   app.on("window-all-closed", () => {});
