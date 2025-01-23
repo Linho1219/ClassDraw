@@ -255,8 +255,8 @@
               : { label: "30 分钟", minutes: 30 },
             { label: "50 分钟", minutes: 50 },
             { label: "1 小时", minutes: 60 },
-            { label: "1.5 小时", minutes: 60 },
-            { label: "2 小时", minutes: 60 },
+            { label: "1.5 小时", minutes: 90 },
+            { label: "2 小时", minutes: 120 },
           ].map(({ label, minutes }) => ({
             label,
             click: () => setQuitTimer(minutes),
@@ -290,7 +290,12 @@
           else
             tray.setToolTip(
               "ClassDraw 抽号机\n定时关闭：" +
-                `${Math.floor(remainingTime / 60)}:${remainingTime % 60}`
+                (remainingTime > 3600
+                  ? Math.floor(remainingTime / 3600) + ":"
+                  : "") +
+                Math.floor((remainingTime % 3600) / 60) +
+                ":" +
+                (remainingTime % 60)
             );
         }
       }, 1000);
