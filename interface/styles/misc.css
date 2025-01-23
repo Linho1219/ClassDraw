@@ -1,0 +1,28 @@
+* {
+  font-family: "Microsoft YaHei UI", sans-serif;
+}
+#body {
+  padding: 30px;
+}
+p {
+  margin: 5px 0;
+}
+.description {
+  font-size: 16px;
+  color: #444;
+  margin: 15px 0;
+}
+span.link[href] {
+  color: var(--accent);
+  cursor: pointer;
+}
+hr {
+  border: none;
+  border-bottom: #ccc 2px solid;
+}
+.link:hover {
+  font-weight: bold;
+}
+.link:active {
+  filter: brightness(50%);
+}

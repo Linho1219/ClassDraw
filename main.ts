@@ -1,7 +1,7 @@
 /// <reference path="node_modules/electron/electron.d.ts" />
 
 {
-  const { app, screen, ipcMain, dialog } = require("electron");
+  const { app, screen, ipcMain, dialog, shell } = require("electron");
   const { BrowserWindow, Menu, Tray } = require("electron");
   // Electron 的 ESM 支持始于 v28.0.0，因此只能用 CJS
 
@@ -11,10 +11,18 @@
     set: (key: string, value: string) => void;
   };
 
-  const configReg = /\d+(-\d+)?(,\d+(-\d+)?)*(?=\.exe$)/;
-  let mute = false;
+  const configReg = /\d+(-\d+)?(,\s?\d+(-\d+)?)*(?=\.exe$)/;
 
-  const execPath = process.argv[1];
+  const windowCfg = {
+    cardSize: 240,
+    margin: 10,
+    aboutSize: [560, 380],
+    guideSize: [650, 675],
+    buttonSize: [43, 86],
+    defaultButtonPos: 0.6,
+  };
+
+  const execPath = process.argv[1].replace(/，/g, ",").replace(/~/g, "-");
   const devFlag = execPath.includes("DEV") || execPath === ".";
   const cfgMatch = execPath.match(configReg)?.[0];
   const cfgDefault = "1-50";
@@ -47,6 +55,7 @@
     alwaysOnTop: true,
     skipTaskbar: true,
     minimizable: false,
+    icon: __dirname + "/favicon.ico",
   } as const;
 
   function getScreenSize() {
@@ -56,11 +65,6 @@
 
   const restrain = (value: number, [min, max]: [number, number]) =>
     Math.min(Math.max(value, min), max);
-
-  const windowCfg = {
-    cardSize: 240,
-    margin: 10,
-  };
 
   const Button = (() => {
     const [width, height] = [43, 86];
@@ -72,7 +76,6 @@
 
     const getButtonConfig = (shadow?: true) => ({
       ...basicWindowConfig,
-      icon: __dirname + "/favicon.ico",
       webPreferences: {
         preload: shadow
           ? undefined
@@ -131,6 +134,8 @@
     };
   })();
 
+  let mute = false;
+
   const Window = (() => {
     const { cardSize, margin } = windowCfg;
     const [width, height] = [cardSize + 2 * margin, cardSize + 2 * margin];
@@ -138,6 +143,8 @@
       id: number;
       win: Electron.CrossProcessExports.BrowserWindow;
     }[] = [];
+    let aboutWin: Electron.CrossProcessExports.BrowserWindow | null = null;
+    let guideWin: Electron.CrossProcessExports.BrowserWindow | null = null;
     let curid = 0;
 
     return {
@@ -149,7 +156,6 @@
         const win = new BrowserWindow({
           ...basicWindowConfig,
           ...{ x, y, width, height },
-          icon: __dirname + "/favicon.ico",
           webPreferences: {
             preload: __dirname + "/interface/scripts/rand.js",
           },
@@ -162,7 +168,10 @@
         win.once("minimize", () => win.close());
         winArr.push({ id, win });
       },
-      close(id: number) {
+      close(id: number | "about" | "guide") {
+        if (id === "about") return setTimeout(() => aboutWin?.close(), 150);
+        if (id === "guide") return setTimeout(() => guideWin?.close(), 150);
+
         const index = winArr.findIndex((win) => win.id === id);
         if (index === -1) console.warn("Window not found: " + id);
         const { win } = winArr[index];
@@ -172,29 +181,61 @@
       openDevTools() {
         winArr.forEach(({ win }) => win.webContents.openDevTools());
       },
+      openMiscDevTools() {
+        aboutWin?.webContents.openDevTools();
+        guideWin?.webContents.openDevTools();
+      },
       setMute(muteflag: boolean) {
         mute = muteflag;
         winArr.forEach(({ win }) => win.webContents.send("mute", muteflag));
       },
-      forEach(callback: (win: Electron.BrowserWindow) => void) {
-        winArr.forEach(({ win }) => callback(win));
+      createMisc(type: "about" | "guide") {
+        const [width, height] =
+          type === "about" ? windowCfg.aboutSize : windowCfg.guideSize;
+        if (type === "about" && aboutWin) return aboutWin.focus();
+        if (type === "guide" && guideWin) return guideWin.focus();
+        const win = new BrowserWindow({
+          ...basicWindowConfig,
+          width: width + windowCfg.margin * 2,
+          height: height + windowCfg.margin * 2,
+          skipTaskbar: false,
+          alwaysOnTop: false,
+          minimizable: true,
+          webPreferences: { preload: __dirname + "/interface/scripts/misc.js" },
+        });
+        win.loadFile(`interface/${type}.html`);
+        if (type === "about") {
+          aboutWin = win;
+          win.on("closed", () => (aboutWin = null));
+        } else {
+          guideWin = win;
+          win.on("closed", () => (guideWin = null));
+        }
       },
     };
   })();
 
   const createTray = () => {
     const contextMenu = Menu.buildFromTemplate([
-      { label: "ClassDraw", enabled: false },
+      { label: "ClassDraw 抽号机", enabled: false },
       {
-        label:
-          "配置: " + (process.argv[1]?.match(configReg)?.[0] ?? "1-50 (默认)"),
+        label: "配置: " + cfgCaption,
         enabled: false,
+      },
+      {
+        label: "指南…",
+        click: () => Window.createMisc("guide"),
+      },
+      {
+        label: "关于…",
+        click: () => Window.createMisc("about"),
       },
       {
         visible: devFlag,
         label: "调试面板",
         submenu: [
           { label: "抽号窗口", click: Window.openDevTools },
+          { label: "关于/指南窗口", click: Window.openMiscDevTools },
           { label: "侧边按钮", click: Button.openDevTools },
           { label: "侧边影子按钮", click: Button.openShadowDevTools },
         ],
@@ -229,7 +270,7 @@
       { label: "退出", role: "quit" },
     ]);
     const tray = new Tray(__dirname + "/favicon.ico");
-    tray.setToolTip("抽号机");
+    tray.setToolTip("ClassDraw 抽号机");
     tray.setContextMenu(contextMenu);
     tray.on("click", () => tray.popUpContextMenu());
 
@@ -245,7 +286,7 @@
           if (remainingTime <= 0) app.quit();
           else
             tray.setToolTip(
-              "抽号机\n定时关闭：" +
+              "ClassDraw 抽号机\n定时关闭：" +
                 `${Math.floor(remainingTime / 60)}:${remainingTime % 60}`
             );
         }
@@ -257,7 +298,7 @@
         quitTimerId = null;
       }
       remainingTime = null;
-      tray.setToolTip("抽号机");
+      tray.setToolTip("ClassDraw 抽号机");
       tray.setContextMenu(contextMenu);
     }
   };
@@ -269,11 +310,9 @@
         type: "info",
         title: "实例冲突",
         message:
-          "已有一个抽号机在运行。\n\n" +
+          "已有一个 ClassDraw 抽号机在运行。\n\n" +
           `正运行的配置：${store.get("config")}\n` +
-          `新启动的配置：${
-            process.argv[1]?.match(configReg)?.[0] ?? "1-50 (默认)"
-          }\n\n` +
+          `新启动的配置：${cfgCaption}\n\n` +
           "如需使用新的配置，请关闭上一个正在运行的抽号机。",
         buttons: ["关闭上一个，加载新数据", "取消启动，继续使用原数据"],
       });
@@ -308,6 +347,7 @@
 
     ipcMain.on("close", (_, id) => Window.close(id));
     ipcMain.on("create-window", Window.create);
+    ipcMain.on("open-url", (_, url) => shell.openExternal(url));
 
     app.on("second-instance", (_e, _argv, _dir, additionalData) => {
       if (

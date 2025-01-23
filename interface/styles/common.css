@@ -5,6 +5,12 @@
   }
 }
 
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+
 @keyframes dark {
   from {
     filter: brightness(80%);
@@ -34,6 +40,6 @@ body {
   background: transparent;
 }
 
-html{
+html {
   overflow: hidden;
 }

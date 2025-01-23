@@ -77,7 +77,7 @@
         bell.play();
         button.disabled = false;
       };
-      $("close").onclick = async () => {
+      $("close").onclick = () => {
         ipcRenderer.send("close", id);
         document.body.style.opacity = "0";
       };
