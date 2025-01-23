@@ -32,7 +32,7 @@ Electron 这几年没有什么很大的变化，所以现在的文档基本适�
 
 前端部分在 `interface` 目录下。因为动态内容不多，没有用框架，就是原生，由 tsc 编译 TypeScript。都是预加载方式载入的。
 
-二进制构建用的是 electron-forge，构建完成会调用 `package/post.ts` 把 `locales` 目录下没用的 `.pak` 语言文件删掉。
+二进制构建用的是 Electron Forge，构建完成会调用 `package/post.ts` 把 `locales` 目录下没用的 `.pak` 语言文件删掉。
 
 单文件封包利用 NSIS 脚本完成，在 `package/pack.nsi` 中。本质上就是将 Electron 应用压缩成一个自解压包，解压到临时目录后启动并带上自解压包的路径作为参数。Electron 应用得到参数后处理得到号数范围。
 
