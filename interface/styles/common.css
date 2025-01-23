@@ -4,11 +4,7 @@
     transform: translateX(100vw);
   }
 }
-@keyframes fade {
-  from {
-    opacity: 0;
-  }
-}
+
 @keyframes dark {
   from {
     filter: brightness(80%);

@@ -155,14 +155,8 @@
       },
       {
         label:
-          "当前配置：" +
-          (process.argv[1]?.match(configReg)?.[0] ?? "默认（1-50）"),
+          "配置: " + (process.argv[1]?.match(configReg)?.[0] ?? "1-50 (默认)"),
         enabled: false,
-      },
-      { type: "separator" },
-      {
-        label: "打开窗口",
-        click: () => createWindow(),
       },
       {
         label: "调试面板",
@@ -174,12 +168,34 @@
           },
           {
             label: "侧边按钮",
-            click: () => buttonUtils.devButton(),
+            click: buttonUtils.devButton,
           },
           {
             label: "侧边影子按钮",
-            click: () => buttonUtils.devShadowButton(),
+            click: buttonUtils.devShadowButton,
           },
+        ],
+      },
+      { type: "separator" },
+      {
+        label: "打开窗口",
+        click: () => createWindow(),
+      },
+      {
+        label: "定时关闭",
+        submenu: [
+          { label: "无", click: () => stopQuitTimer(), type: "radio" },
+          ...[
+            { label: "30 分钟", minutes: 30 },
+            { label: "50 分钟", minutes: 50 },
+            { label: "1 小时", minutes: 60 },
+            { label: "1.5 小时", minutes: 60 },
+            { label: "2 小时", minutes: 60 },
+          ].map(({ label, minutes }) => ({
+            label,
+            click: () => setQuitTimer(minutes),
+            type: "radio" as const,
+          })),
         ],
       },
       {
@@ -190,6 +206,7 @@
           windows.forEach(({ win }) => win.webContents.send("mute", checked));
         },
       },
+      { type: "separator" },
       {
         label: "退出",
         role: "quit",
@@ -198,7 +215,37 @@
     const tray = new Tray(__dirname + "/favicon.ico");
     tray.setToolTip("抽号机");
     tray.setContextMenu(contextMenu);
-    tray.on("click", () => tray.popUpContextMenu(contextMenu));
+    tray.on("click", () => tray.popUpContextMenu());
+
+    let quitTimerId: NodeJS.Timeout | null = null;
+    let remainingTime: number | null = null;
+
+    function setQuitTimer(minutes: number) {
+      console.log("Setting quit timer to " + minutes + " minutes");
+      if (quitTimerId) clearInterval(quitTimerId);
+      remainingTime = minutes * 60;
+      quitTimerId = setInterval(() => {
+        if (remainingTime !== null) {
+          remainingTime--;
+          if (remainingTime <= 0) app.quit();
+          else
+            tray.setToolTip(
+              "抽号机\n定时关闭：" +
+                `${Math.floor(remainingTime / 60)}:${remainingTime % 60}`
+            );
+        }
+      }, 1000);
+    }
+    function stopQuitTimer() {
+      console.log("Stopping quit timer");
+      if (quitTimerId) {
+        clearInterval(quitTimerId);
+        quitTimerId = null;
+      }
+      remainingTime = null;
+      tray.setToolTip("抽号机");
+      tray.setContextMenu(contextMenu);
+    }
   };
 
   app.whenReady().then(() => {
