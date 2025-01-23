@@ -17,7 +17,7 @@
 
 ## 使用指南
 
-![](./interface/assets/guide.svg)
+![](https://raw.githubusercontent.com/Linho1219/ClassDraw/refs/heads/main/interface/assets/guide.svg)
 
 ## 开发指南
 
