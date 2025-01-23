@@ -28,8 +28,6 @@
   const cfgDefault = "1-50";
   const cfgCaption = cfgMatch ?? cfgDefault + " (默认)";
 
-  store.set("config", cfgCaption);
-
   const list = (() => {
     const ranges: (number | [number, number])[] = (cfgMatch ?? cfgDefault)
       .split(",")
@@ -347,6 +345,7 @@
         }, 500);
       }
     }
+    store.set("config", cfgCaption);
     createTray();
     Button.create();
 
