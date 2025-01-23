@@ -7,7 +7,14 @@ const config: ForgeConfig = {
     asar: true,
     name: "ClassDraw",
     icon: "./favicon.ico",
-    ignore: [/\.ts$/, /\.map$/, /\/package$/],
+    ignore: [
+      /\.ts$/,
+      /\.map$/,
+      /tsconfig\.json$/,
+      /\.gitignore$/,
+      /\/package$/,
+      /\.vscode$/,
+    ],
   },
   plugins: [
     {
