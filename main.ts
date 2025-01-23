@@ -1,31 +1,46 @@
 /// <reference path="node_modules/electron/electron.d.ts" />
-/// <reference path="node_modules/electron-store/index.d.ts" />
 
 {
-  const {
-    app,
-    BrowserWindow,
-    Menu,
-    Tray,
-    screen: screen,
-    ipcMain,
-    dialog,
-  } = require("electron");
-  // Electron 的 ESM 支持始于 v28.0.0，因此只能 require
+  const { app, screen, ipcMain, dialog } = require("electron");
+  const { BrowserWindow, Menu, Tray } = require("electron");
+  // Electron 的 ESM 支持始于 v28.0.0，因此只能用 CJS
 
   const Store = require("electron-store");
-  const store = <
-    {
-      get: (key: string) => string | undefined;
-      set: (key: string, value: string) => void;
-    }
-  >new Store();
+  const store = new Store() as {
+    get: (key: string) => string | undefined;
+    set: (key: string, value: string) => void;
+  };
 
   const configReg = /\d+(-\d+)?(,\d+(-\d+)?)*(?=\.exe$)/;
   let mute = false;
-  let devFlag = false;
 
-  const basicConfig: Electron.BrowserWindowConstructorOptions = {
+  const execPath = process.argv[1];
+  const devFlag = execPath.includes("DEV") || execPath === ".";
+  const cfgMatch = execPath.match(configReg)?.[0];
+  const cfgDefault = "1-50";
+  const cfgCaption = cfgMatch ?? cfgDefault + " (默认)";
+
+  store.set("config", cfgCaption);
+
+  const list = (() => {
+    const ranges: (number | [number, number])[] = (cfgMatch ?? cfgDefault)
+      .split(",")
+      .map((raw) => {
+        const [start, end] = raw.split("-").map(Number);
+        return end ? [start, end] : start;
+      });
+    const list = ranges.flatMap((range) => {
+      if (typeof range === "number") return range;
+      let [start, end] = range;
+      if (start > end) [end, start] = [start, end];
+      return Array.from({ length: end - start + 1 }, (_, i) => start + i);
+    });
+    return Array.from(new Set(list.sort((a, b) => a - b)));
+  })();
+
+  let wy = 0;
+
+  const basicWindowConfig: Electron.BrowserWindowConstructorOptions = {
     transparent: true,
     frame: false,
     resizable: false,
@@ -34,50 +49,29 @@
     minimizable: false,
   } as const;
 
-  const cardSize = 260;
+  function getScreenSize() {
+    const { width, height } = screen.getPrimaryDisplay().workAreaSize;
+    return { screenWidth: width, screenHeight: height };
+  }
 
-  const generateList = () => {
-    const execPath = process.argv[1];
-    console.log("execPath: " + execPath);
-    const match = execPath.match(configReg);
-    devFlag = execPath.includes("DEV") || execPath === ".";
-    if (!match) {
-      store.set("config", "1-50 (默认)");
-      return Array.from({ length: 50 }, (_, i) => i + 1);
-    } else store.set("config", match[0]);
-    const ranges: (number | [number, number])[] = match[0]
-      .split(",")
-      .map((raw) => {
-        const [start, end] = raw.split("-").map(Number);
-        return end ? [start, end] : start;
-      });
-    const list = ranges.flatMap((range) => {
-      if (Array.isArray(range)) {
-        let [start, end] = range;
-        if (start > end) [end, start] = [start, end];
-        return Array.from({ length: end - start + 1 }, (_, i) => start + i);
-      } else return range;
-    });
-    return Array.from(new Set(list.sort((a, b) => a - b)));
+  const restrain = (value: number, [min, max]: [number, number]) =>
+    Math.min(Math.max(value, min), max);
+
+  const windowCfg = {
+    cardSize: 240,
+    margin: 10,
   };
 
-  const list = generateList();
-  const windows: {
-    id: number;
-    win: Electron.CrossProcessExports.BrowserWindow;
-  }[] = [];
-
-  let wy: number = 0;
-
-  const buttonUtils = (() => {
+  const Button = (() => {
     const [width, height] = [43, 86];
-    let wx: number;
-    let button: Electron.CrossProcessExports.BrowserWindow | null = null;
-    let shadowButtonObj: Electron.CrossProcessExports.BrowserWindow | null =
-      null;
-    let first = true;
-    const getButtonConfig = (shadow?: boolean) => ({
-      ...basicConfig,
+    const defaultPos = 0.75;
+    let x = 0;
+    let button: Electron.CrossProcessExports.BrowserWindow;
+    let shadowButton: Electron.CrossProcessExports.BrowserWindow;
+    let firstFlag = true;
+
+    const getButtonConfig = (shadow?: true) => ({
+      ...basicWindowConfig,
       icon: __dirname + "/favicon.ico",
       webPreferences: {
         preload: shadow
@@ -86,89 +80,111 @@
         backgroundThrottling: false,
       },
       show: false,
-      thickFrame: false,
       width,
       height,
     });
+
     return {
-      createButton() {
-        if (first) {
-          const { width: screenWidth, height: screenHeight } =
-            screen.getPrimaryDisplay().workAreaSize;
-          wx = screenWidth - width;
-          wy = Math.floor(screenHeight / 2);
-          const shadowButton = new BrowserWindow(getButtonConfig(true));
-          shadowButtonObj = shadowButton;
-          shadowButton.loadFile("interface/shadowButton.html");
-          ipcMain.on("movebuttonstart", () => {
-            shadowButton.showInactive();
-          });
-          ipcMain.on("movebutton", (_, { dy }) => {
-            dy = Math.round(dy);
-            shadowButton.setBounds({
-              x: wx,
-              y: wy + dy - height / 2,
-              width,
-              height,
-            });
-          });
-          ipcMain.on("movebuttonend", (_, { dy }) => {
-            dy = Math.round(dy);
-            wy += dy;
-            if (button)
-              button.setBounds({ x: wx, y: wy - height / 2, width, height });
-            shadowButton.hide();
-          });
-          first = false;
-        }
-        if (button) return;
-        const win = new BrowserWindow(getButtonConfig());
-        win.setBounds({ x: wx, y: wy - height / 2, width, height });
-        win.show();
-        win.setAlwaysOnTop(true, "screen-saver");
-        win.loadFile("interface/button.html");
-        button = win;
+      create() {
+        if (!firstFlag) return;
+        firstFlag = false;
+
+        const { screenWidth, screenHeight } = getScreenSize();
+        x = screenWidth - width;
+        wy = Math.round(screenHeight * defaultPos);
+        const yBound = [0, screenHeight - height] as [number, number];
+        const wyBound = [
+          windowCfg.cardSize / 2,
+          screenHeight - windowCfg.cardSize / 2,
+        ] as [number, number];
+
+        shadowButton = new BrowserWindow(getButtonConfig(true));
+        shadowButton.loadFile("interface/shadowButton.html");
+
+        button = new BrowserWindow(getButtonConfig());
+        button.setBounds({ x, y: wy - height / 2, width, height });
+
+        button.show();
+        button.setAlwaysOnTop(true, "screen-saver");
+        button.loadFile("interface/button.html");
+
+        ipcMain.on("movebuttonstart", () => {
+          shadowButton.showInactive();
+        });
+        ipcMain.on("movebutton", (_, { dy }) => {
+          const y = restrain(wy + Math.round(dy) - height / 2, yBound);
+          shadowButton.setBounds({ x, y, width, height });
+        });
+        ipcMain.on("movebuttonend", (_, { dy }) => {
+          wy += Math.round(dy);
+          const y = wy - height / 2;
+          if (button) button.setBounds({ x, y, width, height });
+          shadowButton.hide();
+        });
       },
-      closeButton: () => (button && button.close(), (button = null)),
-      devButton: () => button && button.webContents.openDevTools(),
-      devShadowButton: () =>
-        shadowButtonObj && shadowButtonObj.webContents.openDevTools(),
+      openDevTools() {
+        if (button) button.webContents.openDevTools();
+      },
+      openShadowDevTools() {
+        if (shadowButton) shadowButton.webContents.openDevTools();
+      },
     };
   })();
 
-  const createWindow = (() => {
+  const Window = (() => {
+    const { cardSize, margin } = windowCfg;
+    const [width, height] = [cardSize + 2 * margin, cardSize + 2 * margin];
+    const winArr: {
+      id: number;
+      win: Electron.CrossProcessExports.BrowserWindow;
+    }[] = [];
     let curid = 0;
-    return () => {
-      const id = curid++;
-      const { width: screenWidth } = screen.getPrimaryDisplay().workAreaSize;
-      const x = screenWidth - cardSize + 10,
-        y = wy - cardSize / 2;
-      const win = new BrowserWindow({
-        ...basicConfig,
-        width: cardSize,
-        height: cardSize,
-        x,
-        y,
-        icon: __dirname + "/favicon.ico",
-        webPreferences: {
-          preload: __dirname + "/interface/scripts/rand.js",
-        },
-      });
-      win.setAlwaysOnTop(true, "screen-saver");
-      win.loadFile("interface/rand.html");
-      win.webContents.once("did-finish-load", () =>
-        win.webContents.send("startup-params", { list, id, mute })
-      );
-      windows.push({ id, win });
+
+    return {
+      create() {
+        const id = curid++;
+        const { screenWidth } = getScreenSize();
+        const x = screenWidth - cardSize - margin,
+          y = wy - cardSize / 2 - margin;
+        const win = new BrowserWindow({
+          ...basicWindowConfig,
+          ...{ x, y, width, height },
+          icon: __dirname + "/favicon.ico",
+          webPreferences: {
+            preload: __dirname + "/interface/scripts/rand.js",
+          },
+        });
+        win.setAlwaysOnTop(true, "screen-saver");
+        win.loadFile("interface/rand.html");
+        win.webContents.once("did-finish-load", () =>
+          win.webContents.send("startup-params", { list, id, mute })
+        );
+        win.once("minimize", () => win.close());
+        winArr.push({ id, win });
+      },
+      close(id: number) {
+        const index = winArr.findIndex((win) => win.id === id);
+        if (index === -1) console.warn("Window not found: " + id);
+        const { win } = winArr[index];
+        winArr.splice(index, 1);
+        setTimeout(() => win.close(), 150);
+      },
+      openDevTools() {
+        winArr.forEach(({ win }) => win.webContents.openDevTools());
+      },
+      setMute(muteflag: boolean) {
+        mute = muteflag;
+        winArr.forEach(({ win }) => win.webContents.send("mute", muteflag));
+      },
+      forEach(callback: (win: Electron.BrowserWindow) => void) {
+        winArr.forEach(({ win }) => callback(win));
+      },
     };
   })();
 
   const createTray = () => {
     const contextMenu = Menu.buildFromTemplate([
-      {
-        label: "ClassDraw",
-        enabled: false,
-      },
+      { label: "ClassDraw", enabled: false },
       {
         label:
           "配置: " + (process.argv[1]?.match(configReg)?.[0] ?? "1-50 (默认)"),
@@ -178,26 +194,13 @@
         visible: devFlag,
         label: "调试面板",
         submenu: [
-          {
-            label: "抽号窗口",
-            click: () =>
-              windows.forEach(({ win }) => win.webContents.openDevTools()),
-          },
-          {
-            label: "侧边按钮",
-            click: buttonUtils.devButton,
-          },
-          {
-            label: "侧边影子按钮",
-            click: buttonUtils.devShadowButton,
-          },
+          { label: "抽号窗口", click: Window.openDevTools },
+          { label: "侧边按钮", click: Button.openDevTools },
+          { label: "侧边影子按钮", click: Button.openShadowDevTools },
         ],
       },
       { type: "separator" },
-      {
-        label: "打开窗口",
-        click: () => createWindow(),
-      },
+      { label: "打开窗口", click: Window.create },
       {
         label: "定时关闭",
         submenu: [
@@ -220,16 +223,10 @@
       {
         label: "静音",
         type: "checkbox",
-        click: ({ checked }) => {
-          mute = checked;
-          windows.forEach(({ win }) => win.webContents.send("mute", checked));
-        },
+        click: ({ checked }) => Window.setMute(checked),
       },
       { type: "separator" },
-      {
-        label: "退出",
-        role: "quit",
-      },
+      { label: "退出", role: "quit" },
     ]);
     const tray = new Tray(__dirname + "/favicon.ico");
     tray.setToolTip("抽号机");
@@ -307,18 +304,11 @@
       }
     }
     createTray();
-    buttonUtils.createButton();
-    ipcMain.on("close", (_, id) => {
-      const index = windows.findIndex((win) => win.id === id);
-      if (index === -1) console.warn("Window not found: " + id);
-      const { win } = windows[index];
-      windows.splice(index, 1);
-      setTimeout(() => {
-        win.close();
-        buttonUtils.createButton();
-      }, 150);
-    });
-    ipcMain.on("create-window", createWindow);
+    Button.create();
+
+    ipcMain.on("close", (_, id) => Window.close(id));
+    ipcMain.on("create-window", Window.create);
+
     app.on("second-instance", (_e, _argv, _dir, additionalData) => {
       if (
         additionalData &&

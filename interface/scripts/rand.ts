@@ -1,4 +1,3 @@
-/// <reference path="./electron.d.ts" />
 {
   const { ipcRenderer } = require("electron");
 
