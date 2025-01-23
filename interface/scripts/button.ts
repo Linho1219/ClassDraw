@@ -32,7 +32,6 @@
       const { screenX: sx, screenY: sy } = isTouch ? event.touches[0] : event;
       let [x, y] = [sx, sy];
       const startTime = event.timeStamp;
-      document.body.classList.add("drag");
 
       const click = () => {
         if (active) {
@@ -50,8 +49,9 @@
         ({ screenX: x, screenY: y } =
           "pointerType" in event ? event : event.touches[0]);
         const [dx, dy] = [x - sx, y - sy];
-        if (Math.abs(dy) > 10&&!moving) {
+        if (Math.abs(dy) > 10 && !moving) {
           moving = true;
+          document.body.classList.add("drag");
           ipcRenderer.send("movebuttonstart", { sx, sy });
           deactivate();
         }

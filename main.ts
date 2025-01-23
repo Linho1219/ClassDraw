@@ -63,14 +63,12 @@
     const getButtonConfig = (shadow?: boolean) => ({
       ...basicConfig,
       icon: __dirname + "/favicon.ico",
-      webPreferences: shadow
-        ? {
-            backgroundThrottling: false,
-          }
-        : {
-            preload: __dirname + "/interface/scripts/button.js",
-            backgroundThrottling: false,
-          },
+      webPreferences: {
+        preload: shadow
+          ? undefined
+          : __dirname + "/interface/scripts/button.js",
+        backgroundThrottling: false,
+      },
       show: false,
       thickFrame: false,
       width,
