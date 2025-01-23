@@ -13,6 +13,7 @@
 
   const configReg = /\d+(-\d+)?(,\d+(-\d+)?)*(?=\.exe$)/;
   let mute = false;
+  let devFlag = false;
 
   const basicConfig: Electron.BrowserWindowConstructorOptions = {
     transparent: true,
@@ -27,7 +28,9 @@
 
   const generateList = () => {
     const execPath = process.argv[1];
+    console.log("execPath: " + execPath);
     const match = execPath.match(configReg);
+    devFlag = execPath.includes("DEV") || execPath === ".";
     if (!match) return Array.from({ length: 50 }, (_, i) => i + 1);
     const ranges: (number | [number, number])[] = match[0]
       .split(",")
@@ -159,6 +162,7 @@
         enabled: false,
       },
       {
+        visible: devFlag,
         label: "调试面板",
         submenu: [
           {
