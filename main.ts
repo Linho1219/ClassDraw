@@ -1,4 +1,5 @@
 /// <reference path="node_modules/electron/electron.d.ts" />
+/// <reference path="node_modules/electron-store/index.d.ts" />
 
 {
   const {
@@ -8,8 +9,17 @@
     Tray,
     screen: screen,
     ipcMain,
+    dialog,
   } = require("electron");
   // Electron 的 ESM 支持始于 v28.0.0，因此只能 require
+
+  const Store = require("electron-store");
+  const store = <
+    {
+      get: (key: string) => string | undefined;
+      set: (key: string, value: string) => void;
+    }
+  >new Store();
 
   const configReg = /\d+(-\d+)?(,\d+(-\d+)?)*(?=\.exe$)/;
   let mute = false;
@@ -31,7 +41,10 @@
     console.log("execPath: " + execPath);
     const match = execPath.match(configReg);
     devFlag = execPath.includes("DEV") || execPath === ".";
-    if (!match) return Array.from({ length: 50 }, (_, i) => i + 1);
+    if (!match) {
+      store.set("config", "1-50 (默认)");
+      return Array.from({ length: 50 }, (_, i) => i + 1);
+    } else store.set("config", match[0]);
     const ranges: (number | [number, number])[] = match[0]
       .split(",")
       .map((raw) => {
@@ -143,7 +156,7 @@
       });
       win.setAlwaysOnTop(true, "screen-saver");
       win.loadFile("interface/rand.html");
-      win.webContents.on("did-finish-load", () =>
+      win.webContents.once("did-finish-load", () =>
         win.webContents.send("startup-params", { list, id, mute })
       );
       windows.push({ id, win });
@@ -190,7 +203,9 @@
         submenu: [
           { label: "无", click: () => stopQuitTimer(), type: "radio" },
           ...[
-            { label: "30 分钟", minutes: 30 },
+            devFlag
+              ? { label: "1 分钟", minutes: 1 }
+              : { label: "30 分钟", minutes: 30 },
             { label: "50 分钟", minutes: 50 },
             { label: "1 小时", minutes: 60 },
             { label: "1.5 小时", minutes: 60 },
@@ -225,7 +240,6 @@
     let remainingTime: number | null = null;
 
     function setQuitTimer(minutes: number) {
-      console.log("Setting quit timer to " + minutes + " minutes");
       if (quitTimerId) clearInterval(quitTimerId);
       remainingTime = minutes * 60;
       quitTimerId = setInterval(() => {
@@ -241,7 +255,6 @@
       }, 1000);
     }
     function stopQuitTimer() {
-      console.log("Stopping quit timer");
       if (quitTimerId) {
         clearInterval(quitTimerId);
         quitTimerId = null;
@@ -253,6 +266,46 @@
   };
 
   app.whenReady().then(() => {
+    const gotTheLock = app.requestSingleInstanceLock();
+    if (!gotTheLock) {
+      const option = dialog.showMessageBoxSync({
+        type: "info",
+        title: "实例冲突",
+        message:
+          "已有一个抽号机在运行。\n\n" +
+          `正运行的配置：${store.get("config")}\n` +
+          `新启动的配置：${
+            process.argv[1]?.match(configReg)?.[0] ?? "1-50 (默认)"
+          }\n\n` +
+          "如需使用新的配置，请关闭上一个正在运行的抽号机。",
+        buttons: ["关闭上一个，加载新数据", "取消启动，继续使用原数据"],
+      });
+      if (option) app.quit();
+      else {
+        app.requestSingleInstanceLock({ cmd: "close" });
+        let newlock = false;
+        let cnt = 0;
+        const getlock = setInterval(() => {
+          newlock = app.requestSingleInstanceLock();
+          cnt++;
+          if (newlock) {
+            clearInterval(getlock);
+            console.log("Got new lock");
+          }
+          if (cnt > 10) {
+            clearInterval(getlock);
+            const option = dialog.showMessageBoxSync({
+              type: "warning",
+              title: "实例冲突",
+              message:
+                "上一个进程未正常退出。\n建议在任务管理器结束任务以免产生问题。",
+              buttons: ["退出", "强制启动新实例"],
+            });
+            if (!option) app.quit();
+          }
+        }, 500);
+      }
+    }
     createTray();
     buttonUtils.createButton();
     ipcMain.on("close", (_, id) => {
@@ -266,6 +319,14 @@
       }, 150);
     });
     ipcMain.on("create-window", createWindow);
+    app.on("second-instance", (_e, _argv, _dir, additionalData) => {
+      if (
+        additionalData &&
+        typeof additionalData === "object" &&
+        "cmd" in additionalData
+      )
+        if (additionalData.cmd === "close") app.quit();
+    });
   });
 
   app.on("window-all-closed", () => {});

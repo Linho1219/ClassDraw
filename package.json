@@ -22,5 +22,8 @@
     "build": "tsc && electron-forge package && esno ./package/post.ts",
     "pack": "tsc && electron-forge package && esno ./package/post.ts && makensis ./package/pack.nsi",
     "sfx": "makensis ./package/pack.nsi"
+  },
+  "dependencies": {
+    "electron-store": "^8.2.0"
   }
 }
