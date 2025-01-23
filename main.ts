@@ -67,11 +67,10 @@
     Math.min(Math.max(value, min), max);
 
   const Button = (() => {
-    const [width, height] = [43, 86];
-    const defaultPos = 0.75;
+    const [width, height] = windowCfg.buttonSize;
     let x = 0;
     let button: Electron.CrossProcessExports.BrowserWindow;
-    let shadowButton: Electron.CrossProcessExports.BrowserWindow;
+    let shadowButton: Electron.CrossProcessExports.BrowserWindow | null = null;
     let firstFlag = true;
 
     const getButtonConfig = (shadow?: true) => ({
@@ -94,15 +93,11 @@
 
         const { screenWidth, screenHeight } = getScreenSize();
         x = screenWidth - width;
-        wy = Math.round(screenHeight * defaultPos);
-        const yBound = [0, screenHeight - height] as [number, number];
+        wy = Math.round(screenHeight * windowCfg.defaultButtonPos);
         const wyBound = [
           windowCfg.cardSize / 2,
           screenHeight - windowCfg.cardSize / 2,
         ] as [number, number];
-
-        shadowButton = new BrowserWindow(getButtonConfig(true));
-        shadowButton.loadFile("interface/shadowButton.html");
 
         button = new BrowserWindow(getButtonConfig());
         button.setBounds({ x, y: wy - height / 2, width, height });
@@ -112,17 +107,27 @@
         button.loadFile("interface/button.html");
 
         ipcMain.on("movebuttonstart", () => {
-          shadowButton.showInactive();
-        });
-        ipcMain.on("movebutton", (_, { dy }) => {
-          const y = restrain(wy + Math.round(dy) - height / 2, yBound);
+          shadowButton = new BrowserWindow({
+            ...getButtonConfig(true),
+            show: true,
+          });
+          shadowButton.loadFile("interface/shadowButton.html");
+          const y = wy - height / 2;
           shadowButton.setBounds({ x, y, width, height });
         });
+        ipcMain.on("movebutton", (_, { dy }) => {
+          let nwy = restrain(wy + Math.round(dy), wyBound);
+          const y = nwy - height / 2;
+          if (shadowButton) shadowButton.setBounds({ x, y, width, height });
+        });
         ipcMain.on("movebuttonend", (_, { dy }) => {
-          wy += Math.round(dy);
+          wy = restrain(wy + Math.round(dy), wyBound);
           const y = wy - height / 2;
           if (button) button.setBounds({ x, y, width, height });
-          shadowButton.hide();
+          if (shadowButton) {
+            shadowButton.close();
+            shadowButton = null;
+          }
         });
       },
       openDevTools() {

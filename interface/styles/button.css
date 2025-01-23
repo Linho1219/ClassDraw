@@ -64,6 +64,6 @@ body {
   transition: none;
 }
 .shadow {
-  animation: none;
+  animation: fade 0.3s;
   transition: none;
 }
