@@ -27,9 +27,9 @@ packager({
   appCopyright: "Copyright (c) 2025 Linho. MIT License.",
   win32metadata: {
     CompanyName: "Linho",
-    FileDescription: "课堂抽号小工具",
-    OriginalFilename: "ClassDraw.exe",
     ProductName: "ClassDraw 抽号机",
+    FileDescription: "ClassDraw 抽号机",
+    OriginalFilename: "ClassDraw.exe",
   },
 
   overwrite: true,
