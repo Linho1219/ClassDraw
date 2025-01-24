@@ -11,7 +11,7 @@
     set: (key: string, value: string) => void;
   };
 
-  const configReg = /\d+(-\d+)?(,\d+(-\d+)?)*(?=\.exe$)/;
+  const configReg = /\d+(-\d+)?(,\d+(-\d+)?)*(?=\.exe$|$)/;
 
   const windowCfg = {
     cardSize: 240,
@@ -314,6 +314,17 @@
   };
 
   app.whenReady().then(() => {
+    if (typeof process.argv[1] !== "string") {
+      const option = dialog.showMessageBoxSync({
+        type: "error",
+        title: "参数缺失",
+        message:
+          "启动参数缺失，未获取到自解压包启动路径。\n" +
+          "请确认是否从正确的发行版本启动。",
+        buttons: ["退出", "以默认配置启动"],
+      });
+      if (!option) app.quit();
+    }
     const gotTheLock = app.requestSingleInstanceLock();
     if (!gotTheLock) {
       const option = dialog.showMessageBoxSync({
