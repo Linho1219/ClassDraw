@@ -4,7 +4,6 @@
     "target": "es2022",
     "moduleResolution": "node",
     "types": ["node"],
-    "esModuleInterop": true,
     "sourceMap": true,
     "strict": true,
   }

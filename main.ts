@@ -22,9 +22,11 @@
     defaultButtonPos: 0.6,
   };
 
-  const execPath = process.argv[1].replace(/，/g, ",").replace(/~/g, "-");
-  const devFlag = execPath.includes("DEV") || execPath === ".";
-  const cfgMatch = execPath.match(configReg)?.[0];
+  const execPath = (<string | undefined>process.argv[1])
+    ?.replace(/，/g, ",")
+    .replace(/~/g, "-");
+  const devFlag = execPath?.includes("DEV") || execPath === ".";
+  const cfgMatch = execPath?.match(configReg)?.[0];
   const cfgDefault = "1-50";
   const cfgCaption = cfgMatch ?? cfgDefault + " (默认)";
 
@@ -67,7 +69,7 @@
   const Button = (() => {
     const [width, height] = windowCfg.buttonSize;
     let x = 0;
-    let button: Electron.CrossProcessExports.BrowserWindow;
+    let button: Electron.CrossProcessExports.BrowserWindow | null = null;
     let shadowButton: Electron.CrossProcessExports.BrowserWindow | null = null;
     let firstFlag = true;
 
@@ -129,10 +131,10 @@
         });
       },
       openDevTools() {
-        if (button) button.webContents.openDevTools();
+        button?.webContents.openDevTools();
       },
       openShadowDevTools() {
-        if (shadowButton) shadowButton.webContents.openDevTools();
+        shadowButton?.webContents.openDevTools();
       },
     };
   })();
@@ -343,7 +345,7 @@
               title: "实例冲突",
               message:
                 "上一个进程未正常退出。\n建议在任务管理器结束任务以免产生问题。",
-              buttons: ["退出", "强制启动新实例"],
+              buttons: ["退出", "继续"],
             });
             if (!option) app.quit();
           }
@@ -359,13 +361,8 @@
     ipcMain.on("open-url", (_, url) => shell.openExternal(url));
     ipcMain.handle("get-app-version", () => app.getVersion());
 
-    app.on("second-instance", (_e, _argv, _dir, additionalData) => {
-      if (
-        additionalData &&
-        typeof additionalData === "object" &&
-        "cmd" in additionalData
-      )
-        if (additionalData.cmd === "close") app.quit();
+    app.on("second-instance", (_e, _argv, _dir, additionalData: any) => {
+      if (additionalData?.cmd === "close") app.quit();
     });
   });
 
