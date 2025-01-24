@@ -1,5 +1,5 @@
 ; NSIS 不支持 UTF-8，故该文件使用 GBK。如果你看到乱码，请检查你的编辑器设置。
-; This script is encoded in GBK, as NSIS do not support UTF-8 encoding.
+; This script is encoded in GBK, as NSIS does not support UTF-8 encoding.
 ; If you see garbled text, check your editor settings.
 
 !define VERSION "1.0"
