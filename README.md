@@ -23,7 +23,7 @@
 
 ### 概述
 
-由于要保留对 Windows 7 的兼容性，Electron 版本锁在 22.3.27。因此：
+**由于要保留对 Windows 7 的兼容性，Electron 版本锁在 22.3.27**。因此：
 
 - 安装依赖时会跳一箩筐的 deprecated，忽略即可。安全性没有问题。
 - 必须使用 CJS 方式引入包（Electron 的 ESM 支持始于 28.0.0）
@@ -32,7 +32,7 @@ Electron 这几年没有什么很大的变化，所以现在的文档基本适�
 
 前端部分在 `interface` 目录下。因为动态内容不多，没有用框架，就是原生，由 tsc 编译 TypeScript。都是预加载方式载入的。
 
-二进制构建用的是 Electron Forge，构建完成会调用 `package/post.ts` 把 `locales` 目录下没用的 `.pak` 语言文件删掉。
+二进制构建用的是 Electron Forge，构建完成会调用 `package/post.ts` 把 `locales` 目录下没用的 `.pak` 语言文件删掉，并更新 `.nsi` 脚本中的版本号信息。
 
 单文件封包利用 NSIS 脚本完成，在 `package/pack.nsi` 中。本质上就是将 Electron 应用压缩成一个自解压包，解压到临时目录后启动并带上自解压包的路径作为参数。Electron 应用得到参数后处理得到号数范围。
 
