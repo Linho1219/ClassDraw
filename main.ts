@@ -11,7 +11,7 @@
     set: (key: string, value: string) => void;
   };
 
-  const configReg = /\d+(-\d+)?(,\s?\d+(-\d+)?)*(?=\.exe$)/;
+  const configReg = /\d+(-\d+)?(,\d+(-\d+)?)*(?=\.exe$)/;
 
   const windowCfg = {
     cardSize: 240,
