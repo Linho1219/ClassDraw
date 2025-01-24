@@ -41,7 +41,7 @@ Electron 这几年没有什么很大的变化，所以现在的文档基本适�
 环境要求：
 
 - Windows 7 或以上
-- Node 18 或以上
+- Node 16 或以上
 - [NSIS 3](https://nsis.sourceforge.io/Download)（并添加到 PATH）
 
 安装依赖：
