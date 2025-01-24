@@ -16,7 +16,7 @@
   const windowCfg = {
     cardSize: 240,
     margin: 10,
-    aboutSize: [560, 380],
+    aboutSize: [560, 400],
     guideSize: [650, 675],
     buttonSize: [43, 86],
     defaultButtonPos: 0.6,
@@ -220,7 +220,7 @@
 
   const createTray = () => {
     const contextMenu = Menu.buildFromTemplate([
-      { label: "ClassDraw 抽号机", enabled: false },
+      { label: "ClassDraw v" + app.getVersion(), enabled: false },
       {
         label: "配置: " + cfgCaption,
         enabled: false,
@@ -357,6 +357,7 @@
     ipcMain.on("close", (_, id) => Window.close(id));
     ipcMain.on("create-window", Window.create);
     ipcMain.on("open-url", (_, url) => shell.openExternal(url));
+    ipcMain.handle("get-app-version", () => app.getVersion());
 
     app.on("second-instance", (_e, _argv, _dir, additionalData) => {
       if (

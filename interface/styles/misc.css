@@ -3,11 +3,13 @@
 }
 
 #body {
-  padding: 30px;
+  padding: 26px 30px;
   animation: fade 0.2s;
+  overflow: hidden;
 }
 p {
   margin: 5px 0;
+  text-align: justify;
 }
 .description {
   font-size: 16px;
@@ -20,7 +22,7 @@ span.link[href] {
 }
 hr {
   border: none;
-  border-bottom: #ccc 2px solid;
+  border-bottom: #ddd 2px solid;
 }
 .link:hover {
   font-weight: bold;
@@ -31,4 +33,40 @@ hr {
 
 .guidePic {
   width: 100%;
+}
+
+.logoPic,
+#version {
+  vertical-align: bottom;
+}
+
+#version {
+  color: #888;
+  font-weight: bold;
+  font-size: 26px;
+  line-height: 38px;
+  margin-left: 10px;
+}
+
+.versions {
+  display: flex;
+  justify-content: space-between;
+  color: #555;
+  font-size: 0.85em;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 0 30px;
+  height: 35px;
+  background: #eee;
+  line-height: 35px;
+}
+
+.versions * {
+  font-family: Consolas, monospace;
+}
+
+.vItem span {
+  color: #888;
 }
