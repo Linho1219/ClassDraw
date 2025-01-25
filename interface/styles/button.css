@@ -58,12 +58,3 @@ body {
 .drag {
   opacity: 0.5;
 }
-
-.shadow #button {
-  opacity: 1;
-  transition: none;
-}
-.shadow {
-  animation: fade 0.3s;
-  transition: none;
-}

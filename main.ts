@@ -75,7 +75,8 @@
     let firstFlag = true;
     let insertedCSSKey: string | undefined = undefined;
     const buttonInvertCSS = () =>
-      "html { transform: " + (dockLeft ? "rotateY(180deg)" : "none") + "; }";
+      `html { transform: ${dockLeft ? "rotateY(180deg)" : "none"}; }`;
+    const shadowCSS = `#button{opacity:1 !important;transition:none !important}body{animation:fade 0.3s !important;}`;
 
     const getButtonConfig = (
       shadow?: true
@@ -120,7 +121,8 @@
             ...getButtonConfig(true),
             show: true,
           });
-          shadowButton.loadFile("interface/shadowButton.html");
+          shadowButton.loadFile("interface/button.html");
+          shadowButton.webContents.insertCSS(shadowCSS);
           shadowButton.webContents.insertCSS(buttonInvertCSS());
           const y = wy - height / 2;
           shadowButton.setBounds({ x: x(), y, width, height });
