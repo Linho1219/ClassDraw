@@ -76,7 +76,9 @@
     let insertedCSSKey: string | undefined = undefined;
     const buttonInvertCSS = () =>
       `html { transform: ${dockLeft ? "rotateY(180deg)" : "none"}; }`;
-    const shadowCSS = `#button{opacity:1 !important;transition:none !important}body{animation:fade 0.3s !important;}`;
+    const shadowCSS =
+      "#button { opacity: 1 !important; transition: none !important }" +
+      "body { animation: fade 0.3s !important }";
 
     const getButtonConfig = (
       shadow?: true
