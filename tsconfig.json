@@ -6,5 +6,6 @@
     "types": ["node"],
     "sourceMap": true,
     "strict": true,
+    "module": "CommonJS"
   }
 }
