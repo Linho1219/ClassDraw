@@ -17,7 +17,7 @@
     cardSize: 240,
     margin: 10,
     aboutSize: [560, 400],
-    guideSize: [650, 675],
+    guideSize: [650, 660],
     buttonSize: [43, 86],
     defaultButtonPos: 0.6,
   };
@@ -47,6 +47,7 @@
   })();
 
   let wy = 0;
+  let dockLeft = false;
 
   const basicWindowConfig: Electron.BrowserWindowConstructorOptions = {
     transparent: true,
@@ -68,12 +69,17 @@
 
   const Button = (() => {
     const [width, height] = windowCfg.buttonSize;
-    let x = 0;
+    let wx = 0;
     let button: Electron.CrossProcessExports.BrowserWindow | null = null;
     let shadowButton: Electron.CrossProcessExports.BrowserWindow | null = null;
     let firstFlag = true;
+    let insertedCSSKey: string | undefined = undefined;
+    const buttonInvertCSS = () =>
+      "html { transform: " + (dockLeft ? "rotateY(180deg)" : "none") + "; }";
 
-    const getButtonConfig = (shadow?: true) => ({
+    const getButtonConfig = (
+      shadow?: true
+    ): Electron.BrowserWindowConstructorOptions => ({
       ...basicWindowConfig,
       webPreferences: {
         preload: shadow
@@ -92,15 +98,18 @@
         firstFlag = false;
 
         const { screenWidth, screenHeight } = getScreenSize();
-        x = screenWidth - width;
+        wx = screenWidth - width;
         wy = Math.round(screenHeight * windowCfg.defaultButtonPos);
+
         const wyBound = [
           windowCfg.cardSize / 2,
           screenHeight - windowCfg.cardSize / 2,
         ] as [number, number];
 
+        const x = () => (dockLeft ? 0 : screenWidth - width);
+
         button = new BrowserWindow(getButtonConfig());
-        button.setBounds({ x, y: wy - height / 2, width, height });
+        button.setBounds({ x: x(), y: wy - height / 2, width, height });
 
         button.show();
         button.setAlwaysOnTop(true, "screen-saver");
@@ -112,18 +121,20 @@
             show: true,
           });
           shadowButton.loadFile("interface/shadowButton.html");
+          shadowButton.webContents.insertCSS(buttonInvertCSS());
           const y = wy - height / 2;
-          shadowButton.setBounds({ x, y, width, height });
+          shadowButton.setBounds({ x: x(), y, width, height });
         });
         ipcMain.on("movebutton", (_, { dy }) => {
           let nwy = restrain(wy + Math.round(dy), wyBound);
           const y = nwy - height / 2;
-          if (shadowButton) shadowButton.setBounds({ x, y, width, height });
+          if (shadowButton)
+            shadowButton.setBounds({ x: x(), y, width, height });
         });
         ipcMain.on("movebuttonend", (_, { dy }) => {
           wy = restrain(wy + Math.round(dy), wyBound);
           const y = wy - height / 2;
-          if (button) button.setBounds({ x, y, width, height });
+          if (button) button.setBounds({ x: x(), y, width, height });
           if (shadowButton) {
             shadowButton.close();
             shadowButton = null;
@@ -135,6 +146,23 @@
       },
       openShadowDevTools() {
         shadowButton?.webContents.openDevTools();
+      },
+      async setDock(isLeft: boolean) {
+        dockLeft = isLeft;
+        if (isLeft && !insertedCSSKey)
+          insertedCSSKey = await button?.webContents.insertCSS(
+            buttonInvertCSS()
+          );
+        else if (!isLeft && insertedCSSKey) {
+          button?.webContents.removeInsertedCSS(insertedCSSKey);
+          insertedCSSKey = undefined;
+        }
+        button?.setBounds({
+          x: dockLeft ? 0 : wx,
+          y: wy - height / 2,
+          width,
+          height,
+        });
       },
     };
   })();
@@ -156,17 +184,22 @@
       create() {
         const id = curid++;
         const { screenWidth } = getScreenSize();
-        const x = screenWidth - cardSize - margin,
+        const x = () => (dockLeft ? -margin : screenWidth - cardSize - margin),
           y = wy - cardSize / 2 - margin;
         const win = new BrowserWindow({
           ...basicWindowConfig,
-          ...{ x, y, width, height },
+          ...{ x: x(), y, width, height },
           webPreferences: {
             preload: __dirname + "/interface/scripts/rand.js",
           },
         });
         win.setAlwaysOnTop(true, "screen-saver");
         win.loadFile("interface/rand.html");
+
+        if (dockLeft)
+          win.webContents.insertCSS(
+            "#body { animation-name: fadeFromLeft !important; }"
+          );
         win.webContents.once("did-finish-load", () =>
           win.webContents.send("startup-params", { list, id, mute })
         );
@@ -246,7 +279,13 @@
         ],
       },
       { type: "separator" },
-      { label: "打开窗口", click: Window.create },
+      {
+        label: "贴靠位置",
+        submenu: [
+          { label: "右侧", click: () => Button.setDock(false), type: "radio" },
+          { label: "左侧", click: () => Button.setDock(true), type: "radio" },
+        ],
+      },
       {
         label: "定时关闭",
         submenu: [

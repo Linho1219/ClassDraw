@@ -4,6 +4,12 @@
     transform: translateX(100vw);
   }
 }
+@keyframes fadeFromLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-100vw);
+  }
+}
 
 @keyframes fade {
   from {

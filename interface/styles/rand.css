@@ -82,7 +82,7 @@
   background: linear-gradient(transparent, #0003);
 }
 
-.ripple-box {
+.rippleBox {
   position: absolute;
   top: 0;
   right: 0;
