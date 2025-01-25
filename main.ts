@@ -325,25 +325,31 @@
     let quitTimerId: NodeJS.Timeout | null = null;
     let remainingTime: number | null = null;
 
+    function updateTooltip() {
+      function timeCaption() {
+        if (!remainingTime) return "";
+        const t = remainingTime - 1;
+        if (t === 0) return "不到 1 分钟";
+        if (t < 60) return `${t} 分钟`;
+        if (t % 60 === 0) return `${t / 60} 小时`;
+        return `${Math.floor(t / 60)} 小时 ${t % 60} 分钟`;
+      }
+      if (remainingTime)
+        tray.setToolTip(`ClassDraw 抽号机\n${timeCaption()}后自动退出`);
+      else tray.setToolTip("ClassDraw 抽号机");
+    }
+
     function setQuitTimer(minutes: number) {
       if (quitTimerId) clearInterval(quitTimerId);
-      remainingTime = minutes * 60;
+      remainingTime = minutes;
+      updateTooltip();
       quitTimerId = setInterval(() => {
         if (remainingTime !== null) {
           remainingTime--;
           if (remainingTime <= 0) app.quit();
-          else
-            tray.setToolTip(
-              "ClassDraw 抽号机\n定时关闭：" +
-                (remainingTime > 3600
-                  ? Math.floor(remainingTime / 3600) + ":"
-                  : "") +
-                Math.floor((remainingTime % 3600) / 60) +
-                ":" +
-                (remainingTime % 60)
-            );
+          updateTooltip();
         }
-      }, 1000);
+      }, 60 * 1000);
     }
     function stopQuitTimer() {
       if (quitTimerId) {
@@ -351,8 +357,7 @@
         quitTimerId = null;
       }
       remainingTime = null;
-      tray.setToolTip("ClassDraw 抽号机");
-      tray.setContextMenu(contextMenu);
+      updateTooltip();
     }
   };
 
