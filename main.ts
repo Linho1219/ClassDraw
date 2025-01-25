@@ -130,11 +130,11 @@ const Button = (() => {
         ...getButtonConfig(true),
         show: true,
       });
+      const y = states.wy - height / 2;
+      shadowButton.setBounds({ x: x(), y, width, height });
       shadowButton.loadFile("interface/button.html");
       shadowButton.webContents.insertCSS(shadowCSS);
       shadowButton.webContents.insertCSS(buttonInvertCSS());
-      const y = states.wy - height / 2;
-      shadowButton.setBounds({ x: x(), y, width, height });
     });
     ipcMain.on("movebutton", (_, { dy }) => {
       let nwy = restrain(states.wy + Math.round(dy), wyBound);
