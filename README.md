@@ -74,15 +74,42 @@ npm run pack
 npm run sfx
 ```
 
-> [!note]
->
-> 如果你遇到这样的错误：
->
-> ```txt
-> makensis : 无法将“makensis”项识别为 cmdlet、函数、脚本文件或可运行程序的名称。请检查名称的拼写，如果包括路径，请确保路径正确，然后再试一次。
-> ```
->
-> 说明你没把 NSIS 添加到 PATH。
+### 常见问题
+
+#### 找不到 `makensis`
+
+如果遇到这样的错误：
+
+```
+makensis : 无法将“makensis”项识别为 cmdlet、函数、脚本文件或可运行程序的名称。请检查名称的拼写，如果包括路径，请确保路径正确，然后再试一次。
+```
+
+说明你没把 `makensis.exe` 所在目录添加到 PATH。默认情况下其位置为 `C:\Program Files (x86)\NSIS\Bin`。
+
+#### 构建过程速度慢 / 网络问题 / 需要离线构建
+
+安装依赖时正常，但是在执行 `build` 时出现 `TIMEOUT`、`INVALID_URL` 等网络问题，并且身处提瓦特大陆。
+
+由于打包过程需要 Electron 二进制文件，如果缓存失效就要重新下载。此问题可以通过合适地配置网络解决。但是既然锁版本了，每次重新下载也没有必要。一般构建过程（不包含单文件封包）只需几秒到十几秒，超出这个时间基本就是卡在网络上了。
+
+`build.ts` 中定义了 Electron 二进制包的缓存位置。只需在项目根目录下创建 `cache` 文件夹，然后将下载好的 `electron-v22.3.27-win32-x64.zip` 放进去，即可识别到并使用该包来构建。
+
+可以从 [其 Github 仓库的 Release](https://github.com/electron/electron/releases/tag/v22.3.27) 中下载。这里提供一下哈希以免下错：
+
+```
+MD5    FAE28FAA48B38BB717725F4B88C6C953
+SHA-1  967A5CF7E53598B4E741C1F83F6F72389B37A290
+```
+
+#### 文件锁定
+
+如果遇到这样的错误：
+
+```
+[Error: EBUSY: resource busy or locked, unlink '...' ]
+```
+
+即文件被占用。可以使用 PowerToys 的 File Locksmith 或其他类似工具处理。
 
 ### 调试
 

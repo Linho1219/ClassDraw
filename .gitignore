@@ -2,8 +2,11 @@
 *.js
 *.map
 
-# test
+# Test
 *.test.ts
+
+# Electron ZIP
+cache
 
 # Logs
 logs
