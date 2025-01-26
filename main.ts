@@ -1,5 +1,4 @@
-/// <reference path="node_modules/electron/electron.d.ts" />
-/// <reference path="types.d.ts" />
+/// <reference path="main.d.ts" />
 
 // Electron 的 ESM 支持始于 v28.0.0，因此只能用 CJS
 

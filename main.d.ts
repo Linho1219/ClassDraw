@@ -1,3 +1,5 @@
+/// <reference path="node_modules/electron/electron.d.ts" />
+
 type StoreConstructor = new () => {
   get: (key: string) => string | undefined;
   set: (key: string, value: string) => void;
