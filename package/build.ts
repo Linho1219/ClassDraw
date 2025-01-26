@@ -49,6 +49,7 @@ packager({
     /\.gitignore$/,
     /\/package$/,
     /\/cache$/,
+    /\/misc$/,
     /\.vscode$/,
   ],
 }).then((appPaths) => {

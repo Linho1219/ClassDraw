@@ -35,8 +35,8 @@ const getRand = (() => {
 })();
 
 const autioInit = (mute: boolean) => {
-  const music = new Audio("assets/music.wav");
-  const bell = new Audio("assets/bell.wav");
+  const music = new Audio("assets/music.mp3");
+  const bell = new Audio("assets/bell.mp3");
   const audioContext = new window.AudioContext();
   audioContext
     .createMediaElementSource(music)
@@ -69,8 +69,6 @@ Promise.all([ipcParamsPromise, contentLoadPromise]).then(
       ripple.style.top = event.y - button.offsetTop - 10 + "px";
       ripple.style.left = event.x - button.offsetLeft - 10 + "px";
       await sleep(1500);
-      music.pause();
-      music.currentTime = 0;
       bell.play();
       button.disabled = false;
     };
