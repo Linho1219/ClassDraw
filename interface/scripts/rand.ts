@@ -1,9 +1,11 @@
 const { ipcRenderer } = require("electron");
 
-const $ = (selector: string) =>
-  <HTMLElement>(
-    (document.getElementById(selector) ?? document.querySelector(selector))
-  );
+function $(selector: string) {
+  const e =
+    document.getElementById(selector) ?? document.querySelector(selector);
+  if (!e) throw new ReferenceError(`Element not found: ${selector}`);
+  return e;
+}
 const sleep = async (ms: number): Promise<void> =>
   new Promise((r) => setTimeout(r, ms));
 
@@ -12,14 +14,10 @@ const ipcParamsPromise = new Promise<{
   id: number;
   mute: boolean;
 }>((resolve) =>
-  ipcRenderer.on("startup-params", (_event, args) => {
-    resolve(args);
-  })
+  ipcRenderer.on("startup-params", (_event, args) => resolve(args))
 );
 const contentLoadPromise = new Promise<void>((resolve) =>
-  window.addEventListener("DOMContentLoaded", () => {
-    resolve();
-  })
+  window.addEventListener("DOMContentLoaded", () => resolve())
 );
 
 const getRand = (() => {
@@ -35,15 +33,18 @@ const getRand = (() => {
 })();
 
 const autioInit = (mute: boolean) => {
-  const music = new Audio("assets/music.mp3");
-  const bell = new Audio("assets/bell.mp3");
+  const names = ["music", "bell"] as const;
   const audioContext = new window.AudioContext();
-  audioContext
-    .createMediaElementSource(music)
-    .connect(audioContext.destination);
-  audioContext.createMediaElementSource(bell).connect(audioContext.destination);
-  music.muted = bell.muted = mute;
-  return { music, bell };
+  const audios = names.reduce((acc, name) => {
+    const audio = new Audio(`assets/${name}.mp3`);
+    audioContext
+      .createMediaElementSource(audio)
+      .connect(audioContext.destination);
+    audio.muted = mute;
+    acc[name] = audio;
+    return acc;
+  }, {} as Record<(typeof names)[number], HTMLAudioElement>);
+  return audios;
 };
 
 Promise.all([ipcParamsPromise, contentLoadPromise]).then(
