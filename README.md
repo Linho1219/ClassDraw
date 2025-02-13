@@ -82,7 +82,7 @@ npm run pack
 npm run sfx
 ```
 
-> [!info]
+> [!note]
 >
 > 也可使用 Linux。例如通过 `sudo apt-get install nsis` 安装 NSIS。但请注意！Linux 下的 NSIS 使用 UTF-8 编码（区别于 Windows 下只接受 GBK），因此需要手动将 `package/pack.nsi` 的重新编码为 UTF-8 并保存。启动、调试、打包命令与 Windows 下一致。
 
