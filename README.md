@@ -1,5 +1,11 @@
 # ClassDraw 抽号机
 
+> [!warning]
+>
+> 由于需要兼容 Windows 7，本项目使用 Electron 22.3.27。
+>
+> 采用旧版本工具链是痛苦的，故本项目大概率不会持续维护。如有需要请自行 fork。
+
 ## 介绍
 
 简单易用的课堂抽号小工具，基于 Electron 开发。
@@ -23,7 +29,7 @@
 
 ### 概述
 
-**由于要保留对 Windows 7 的兼容性，Electron 版本锁在 22.3.27**。因此：
+由于要保留对 Windows 7 的兼容性，Electron 版本锁在 22.3.27。因此：
 
 - 安装依赖时会跳一些 `npm warn deprecated`，忽略即可。安全性没有问题。
 - 必须使用 CJS 方式引入包（Electron 的 ESM 支持始于 28.0.0）
@@ -76,6 +82,10 @@ npm run pack
 npm run sfx
 ```
 
+> [!info]
+>
+> 也可使用 Linux。例如通过 `sudo apt-get install nsis` 安装 NSIS。但请注意！Linux 下的 NSIS 使用 UTF-8 编码（区别于 Windows 下只接受 GBK），因此需要手动将 `package/pack.nsi` 的重新编码为 UTF-8 并保存。启动、调试、打包命令与 Windows 下一致。
+
 ### 常见问题
 
 #### 找不到 `makensis`
@@ -112,6 +122,23 @@ SHA-1  967A5CF7E53598B4E741C1F83F6F72389B37A290
 ```
 
 即文件被占用。可以使用 PowerToys 的 File Locksmith 或其他类似工具处理。
+
+### 缓存权限错误
+
+```
+[Error: EPERM: operation not permitted, rmdir 'C:\Users\***\AppData\Local\Temp\electron-packager\tmp-G2VRQu\resources\app'] {
+  errno: -4048,
+  code: 'EPERM',
+  syscall: 'rmdir',
+  path: 'C:\\Users\\***\\AppData\\Local\\Temp\\electron-packager\\tmp-***\\resources\\app'
+}
+```
+
+Electron + Electron Packager 的远古 bug，在特定的 Windows 版本上出现。以管理员权限甚至 SYSTEM 权限执行都无法解决。
+
+解决方案：暂未找到。如有解决方法请提交 issue 或 PR。
+
+曲线救国：用 Linux。
 
 ### 调试
 
