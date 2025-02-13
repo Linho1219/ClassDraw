@@ -2,6 +2,9 @@
 *.js
 *.map
 
+# Metadata
+desktop.ini
+
 # Test
 *.test.ts
 
