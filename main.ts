@@ -511,9 +511,7 @@ app.whenReady().then(async () => {
       buttons: ["退出", "以默认配置启动"],
     });
     if (!option) app.quit();
-  }
-
-  if (!configs.dev && !configs.raw) {
+  } else if (!configs.dev && !configs.raw) {
     const option = dialog.showMessageBoxSync({
       type: "error",
       title: "配置缺失",
