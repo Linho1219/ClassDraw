@@ -1,22 +1,12 @@
 import packager from "@electron/packager";
-import fs from "fs";
-import path from "path";
-import iconv from "iconv-lite";
+import fs from "node:fs";
+import path from "node:path";
 
 const localeDir = "./out/ClassDraw-win32-x64/locales";
-const nsiPath = "./package/pack.nsi";
+
 const cacheDir = "./cache";
 
 const packageJSON = JSON.parse(fs.readFileSync("./package.json", "utf8"));
-
-const nsiContent = iconv.decode(fs.readFileSync(nsiPath), "GBK");
-const updatedNsiContent = nsiContent.replace(
-  /!define VERSION .+(?=\r?\n)/,
-  `!define VERSION "${packageJSON.version}"`
-);
-fs.writeFileSync(nsiPath, iconv.encode(updatedNsiContent, "GBK"));
-
-console.log(`Updated NSIS script with version ${packageJSON.version}.`);
 
 const cacheFileName = `electron-v${(<string>(
   packageJSON.devDependencies.electron

@@ -11,6 +11,9 @@ desktop.ini
 # Electron ZIP
 cache
 
+# Temp
+*.temp.nsi
+
 # Logs
 logs
 *.log

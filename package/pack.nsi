@@ -2,7 +2,8 @@
 ; This script is encoded in GBK, as NSIS does not support UTF-8 encoding.
 ; If you see garbled text, check your editor settings.
 
-!define VERSION "1.0"
+; 此处的版本信息会在执行 npm run sfx 时自动处理，无需手动修改。
+!define VERSION "X.X"
 !define OUTPUT_FILE "ClassDraw 1-50.exe"
 
 OutFile "..\out\${OUTPUT_FILE}"

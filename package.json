@@ -12,13 +12,14 @@
     "electron": "^22.3.27",
     "esno": "^4.8.0",
     "iconv-lite": "^0.6.3",
+    "jschardet": "^3.1.4",
     "ts-node": "^10.9.2"
   },
   "scripts": {
     "start": "tsc && electron .",
     "build": "tsc && esno ./package/build.ts",
-    "pack": "tsc && esno ./package/build.ts && makensis ./package/pack.nsi",
-    "sfx": "makensis ./package/pack.nsi"
+    "pack": "tsc && esno ./package/build.ts && esno ./package/sfx.ts",
+    "sfx": "esno ./package/sfx.ts"
   },
   "dependencies": {
     "electron-store": "^8.2.0"
