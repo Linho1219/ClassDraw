@@ -20,9 +20,8 @@ const configs = (() => {
   const cfgDefault = "1-50";
   const configReg = /\d+(-\d+)?(,\d+(-\d+)?)*(?=\.exe$|$)/;
 
-  const path = (<string | undefined>process.argv[1])
-    ?.replace(/，/g, ",")
-    .replace(/~/g, "-");
+  const filePath = <string | undefined>process.argv[1];
+  const path = filePath?.replace(/，/g, ",").replace(/~/g, "-");
   const match = path?.match(configReg)?.[0];
   const caption = match ?? cfgDefault + " (默认)";
   const final = match ? match : cfgDefault;
@@ -41,7 +40,7 @@ const configs = (() => {
 
   const dev = path?.includes("DEV") || path === ".";
 
-  return { caption, final, dev, list };
+  return { caption, final, filePath, raw: match, dev, list };
 })();
 
 const states = {
@@ -465,8 +464,44 @@ const SingleLock = (() => {
   return { attempt, listenClose };
 })();
 
+class TaskQueue {
+  private queue: (() => any)[] = [];
+  private destroyed = false;
+  constructor() {}
+  private check() {
+    if (this.destroyed) throw new Error("TaskQueue has been triggered.");
+  }
+  private destroy() {
+    this.queue = [];
+    this.destroyed = true;
+  }
+  push(task: () => any) {
+    if (this.destroyed) throw new Error("TaskQueue has been triggered.");
+    this.queue.push(task);
+  }
+  trigger() {
+    this.check();
+    this.queue.forEach((task) => {
+      try {
+        task();
+      } catch (error) {
+        console.error("TaskQueue Error:", error);
+      }
+    });
+    this.destroy();
+  }
+  triggerAsync() {
+    this.check();
+    return Promise.all(this.queue.map((task) => task())).then(() =>
+      this.destroy()
+    );
+  }
+}
+
 app.whenReady().then(async () => {
-  if (typeof process.argv[1] !== "string") {
+  const taskQueue = new TaskQueue();
+
+  if (!configs.dev && typeof configs.raw !== "string") {
     const option = dialog.showMessageBoxSync({
       type: "error",
       title: "参数缺失",
@@ -478,6 +513,17 @@ app.whenReady().then(async () => {
     if (!option) app.quit();
   }
 
+  if (!configs.dev && configs.filePath) {
+    const option = dialog.showMessageBoxSync({
+      type: "error",
+      title: "配置缺失",
+      message: "在文件名中未找到配置信息：\n" + configs.filePath,
+      buttons: ["退出", "使用默认配置并打开帮助窗口"],
+    });
+    if (!option) app.quit();
+    else taskQueue.push(() => Window.createMisc("guide"));
+  }
+
   if (!(await SingleLock.attempt())) app.quit();
 
   Store.set("config", configs.caption);
@@ -487,6 +533,8 @@ app.whenReady().then(async () => {
   Button.create();
   Window.listen();
   SingleLock.listenClose();
+
+  taskQueue.trigger();
 });
 
 app.on("window-all-closed", () => {});
