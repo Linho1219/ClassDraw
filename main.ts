@@ -501,7 +501,7 @@ class TaskQueue {
 app.whenReady().then(async () => {
   const taskQueue = new TaskQueue();
 
-  if (!configs.dev && typeof configs.raw !== "string") {
+  if (!configs.dev && typeof configs.filePath !== "string") {
     const option = dialog.showMessageBoxSync({
       type: "error",
       title: "参数缺失",
@@ -513,7 +513,7 @@ app.whenReady().then(async () => {
     if (!option) app.quit();
   }
 
-  if (!configs.dev && configs.filePath) {
+  if (!configs.dev && !configs.raw) {
     const option = dialog.showMessageBoxSync({
       type: "error",
       title: "配置缺失",
