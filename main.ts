@@ -285,7 +285,7 @@ const Window = (() => {
   };
 })();
 
-const quitTimer = (() => {
+const QuitTimer = (() => {
   let quitTimerId: NodeJS.Timeout | null = null;
   let remainingTime: number | null = null;
 
@@ -355,7 +355,7 @@ const TrayIcon = (() => {
         {
           label: "无",
           click: () => {
-            quitTimer.stop();
+            QuitTimer.stop();
             updateTooltip(0);
           },
           type: "radio",
@@ -377,7 +377,7 @@ const TrayIcon = (() => {
   ]);
 
   function setQuitTimer(minutes: number) {
-    quitTimer.set(minutes, updateTooltip);
+    QuitTimer.set(minutes, updateTooltip);
   }
 
   function updateTooltip(remainingTime: number) {
