@@ -6,6 +6,12 @@ import { execSync } from "node:child_process";
 
 const nsiPath = "./package/pack.nsi";
 const nsiTempPath = "./package/pack.temp.nsi";
+const appPath = "./out/ClassDraw-win32-x64/";
+
+if (!fs.existsSync(appPath) || fs.readdirSync(appPath).length === 0) {
+  console.error(`No app bundle found at: ${appPath}\n  DID YOU FORGET TO BUILD?`);
+  process.exit(1);
+}
 
 const packageJSON = JSON.parse(fs.readFileSync("./package.json", "utf8"));
 
