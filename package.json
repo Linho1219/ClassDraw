@@ -10,16 +10,16 @@
     "@types/node": "^22.10.7",
     "depcheck": "^1.4.7",
     "electron": "^22.3.27",
-    "esno": "^4.8.0",
     "iconv-lite": "^0.6.3",
     "jschardet": "^3.1.4",
-    "ts-node": "^10.9.2"
+    "ts-node": "^10.9.2",
+    "tsx": "^4.19.2"
   },
   "scripts": {
     "start": "tsc && electron .",
-    "build": "tsc && esno ./package/build.ts",
-    "pack": "tsc && esno ./package/build.ts && esno ./package/sfx.ts",
-    "sfx": "esno ./package/sfx.ts"
+    "build": "tsc && tsx ./package/build.ts",
+    "pack": "tsc && tsx ./package/build.ts && tsx ./package/sfx.ts",
+    "sfx": "tsx ./package/sfx.ts"
   },
   "dependencies": {
     "electron-store": "^8.2.0"
